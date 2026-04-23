@@ -1,0 +1,266 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Trash2, ArrowDownToLine, Receipt, Clock, CheckCircle2, ChevronDown, ChevronUp, Calendar, X } from "lucide-react";
+import { useState, useMemo } from "react";
+
+interface PaymentHistoryProps {
+  paymentsHistory: any[];
+  nameP1: string;
+  nameP2: string;
+  formatCurrency: (value: number) => string;
+  progressPercent: number;
+  handleClearHistory: () => void;
+}
+
+export function PaymentHistory({
+  paymentsHistory,
+  nameP1,
+  nameP2,
+  formatCurrency,
+  progressPercent,
+  handleClearHistory
+}: PaymentHistoryProps) {
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+
+  // Generate available years and months from data
+  const { availableYears, availableMonths } = useMemo(() => {
+    const years = new Set<string>();
+    const months = new Set<string>();
+    paymentsHistory.forEach(p => {
+      const d = new Date(p.date);
+      years.add(d.getFullYear().toString());
+      months.add((d.getMonth() + 1).toString());
+    });
+    return {
+      availableYears: Array.from(years).sort((a, b) => Number(b) - Number(a)),
+      availableMonths: Array.from(months).sort((a, b) => Number(a) - Number(b))
+    };
+  }, [paymentsHistory]);
+
+  // Filter and sort payments
+  const filteredPayments = useMemo(() => {
+    return paymentsHistory.filter(payment => {
+      const d = new Date(payment.date);
+      const paymentMonth = (d.getMonth() + 1).toString();
+      const paymentYear = d.getFullYear().toString();
+      
+      const monthMatch = selectedMonth === "all" || paymentMonth === selectedMonth;
+      const yearMatch = selectedYear === "all" || paymentYear === selectedYear;
+      
+      return monthMatch && yearMatch;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [paymentsHistory, selectedMonth, selectedYear]);
+
+  const displayedPayments = filteredPayments.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredPayments.length;
+
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+  return (
+    <>
+      <Card className="shadow-sm border-0 bg-transparent">
+        <CardHeader className="pb-4 px-2">
+          <div className="space-y-1">
+            <CardTitle className="text-xl text-white flex items-center gap-2">
+              <span className="bg-sky-500/20 p-2 rounded-xl text-sky-400">
+                <Receipt className="w-5 h-5" />
+              </span>
+              Extrato
+            </CardTitle>
+            <CardDescription className="text-xs text-slate-400">Acompanhe todos os depósitos feitos</CardDescription>
+          </div>
+          <div className="flex gap-2 self-start sm:self-auto flex-wrap mt-2">
+             {progressPercent >= 100 && paymentsHistory.length > 0 && (
+               <Button 
+                 variant="outline" 
+                 size="sm" 
+                 className="text-pink-400 border-pink-400/20 hover:bg-pink-400/10 bg-transparent"
+                 onClick={handleClearHistory}
+               >
+                 <Trash2 className="w-4 h-4 mr-2" />
+                 Limpar
+               </Button>
+             )}
+          </div>
+        </CardHeader>
+        <CardContent className="px-2">
+          {paymentsHistory.length > 0 && (
+             <div className="flex gap-2 mb-6 bg-white/5 p-2 rounded-2xl shadow-sm border border-white/10 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-2 pl-2">
+                   <Calendar className="w-4 h-4 text-slate-400" />
+                </div>
+                <select 
+                  className="bg-white/10 border-none text-white text-sm font-medium rounded-xl p-2 outline-none appearance-none px-4"
+                  value={selectedMonth}
+                  onChange={(e) => { setSelectedMonth(e.target.value); setVisibleCount(5); }}
+                >
+                  <option value="all" className="bg-slate-900 text-white">Mês (Todos)</option>
+                  {availableMonths.map(m => (
+                    <option key={m} value={m} className="bg-slate-900 text-white">{monthNames[Number(m)-1]}</option>
+                  ))}
+                </select>
+                <select 
+                  className="bg-white/10 border border-white/5 text-white text-sm rounded-lg focus:ring-sky-500 focus:border-sky-500 p-1.5 outline-none appearance-none px-4"
+                  value={selectedYear}
+                  onChange={(e) => { setSelectedYear(e.target.value); setVisibleCount(5); }}
+                >
+                  <option value="all" className="bg-slate-900 text-white">Ano (Todos)</option>
+                  {availableYears.map(y => (
+                    <option key={y} value={y} className="bg-slate-900 text-white">{y}</option>
+                  ))}
+                </select>
+             </div>
+          )}
+          {filteredPayments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 glass-card-subtle mt-4">
+              <Clock className="w-8 h-8 text-slate-500 mb-3" />
+              <p className="text-slate-400 font-medium text-center">Nenhum pagamento encontrado para este filtro.</p>
+              {paymentsHistory.length === 0 && <p className="text-slate-500 text-sm text-center">Seus depósitos aparecerão aqui.</p>}
+            </div>
+          ) : (
+          <div className="mt-4">
+            <div className="relative">
+              {/* Timeline line */}
+              <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-white/10" />
+              
+              <div className="space-y-6">
+                {displayedPayments.map((payment, index) => {
+                  const isP1 = payment.payerId === 'P1';
+                  const payerName = isP1 ? nameP1 : nameP2;
+                  const paymentDate = new Date(payment.date);
+                  const isManual = payment.paymentId?.startsWith('mock_') || payment.paymentId?.startsWith('manual_');
+                  
+                  return (
+                    <div key={payment.paymentId || index} className="relative flex gap-4 cursor-pointer group" onClick={() => setSelectedPayment(payment)}>
+                      {/* Avatar / Timeline node */}
+                      <div className="relative z-10 flex-shrink-0">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border-[3px] border-[#0f172a] shadow-sm transition-transform group-hover:scale-105
+                          ${isP1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}
+                        >
+                          {payerName.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      
+                      {/* Content Card */}
+                      <div className="flex-1 glass-card-subtle p-4 group-hover:bg-white/10 transition-all relative overflow-hidden">
+                        <div className={`absolute top-0 left-0 w-1 h-full ${isP1 ? 'bg-emerald-400' : 'bg-purple-400'}`} />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 ml-2">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-white">{payerName}</span>
+                              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 font-bold flex items-center gap-1 border border-sky-500/20">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {isManual ? "Concluído" : "Pix"}
+                              </span>
+                            </div>
+                            <div className="text-xs text-slate-400 flex items-center gap-1 flex-wrap">
+                              <span className="capitalize">
+                                {paymentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} às {paymentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="text-left sm:text-right flex-shrink-0">
+                            <span className="font-black text-xl text-emerald-400 flex items-center sm:justify-end gap-1.5 bg-emerald-500/10 sm:bg-transparent px-3 py-1 sm:p-0 rounded-lg w-fit">
+                              <ArrowDownToLine className="w-4 h-4 text-emerald-500" />
+                              <span>+ {formatCurrency(payment.amount)}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {hasMore && (
+              <div className="mt-8 flex justify-center">
+                <Button 
+                  variant="outline" 
+                  className="bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white border-white/10 rounded-full px-6 shadow-sm z-10 relative"
+                  onClick={() => setVisibleCount(prev => prev + 5)}
+                >
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  Ver mais pagamentos ({filteredPayments.length - visibleCount})
+                </Button>
+              </div>
+            )}
+            
+            {visibleCount > 5 && !hasMore && filteredPayments.length > 5 && (
+              <div className="mt-8 flex justify-center">
+                <Button 
+                  variant="ghost" 
+                  className="text-slate-400 hover:bg-white/10 hover:text-white rounded-full px-6 z-10 relative"
+                  onClick={() => setVisibleCount(5)}
+                >
+                  <ChevronUp className="w-4 h-4 mr-2" />
+                  Recolher histórico
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+      {/* Payment Details Modal */}
+      {selectedPayment && (
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setSelectedPayment(null)}>
+           <div className="glass-card w-full max-w-sm rounded-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+             <div className="p-5 border-b border-white/10 flex justify-between items-center">
+               <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                 <Receipt className="w-5 h-5 text-sky-400" />
+                 Detalhes do Pagamento
+               </h3>
+               <button onClick={() => setSelectedPayment(null)} className="text-slate-400 hover:text-white bg-white/5 rounded-full p-1 transition-colors">
+                 <X className="w-5 h-5" />
+               </button>
+             </div>
+             <div className="p-5 space-y-4">
+                <div className="flex justify-center mb-6">
+                   <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                     <div className="bg-emerald-500/20 p-2 rounded-full">
+                       <ArrowDownToLine className="w-6 h-6 text-emerald-400" />
+                     </div>
+                     <span className="text-3xl font-black">{formatCurrency(selectedPayment.amount)}</span>
+                   </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 text-sm">Pagador</span>
+                    <span className="font-semibold text-white">{selectedPayment.payerId === 'P1' ? nameP1 : nameP2}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 text-sm">Data e Hora</span>
+                    <span className="font-medium text-slate-300 text-sm flex gap-1">
+                      {new Date(selectedPayment.date).toLocaleDateString('pt-BR')} às {new Date(selectedPayment.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-white/5">
+                    <span className="text-slate-400 text-sm">Status</span>
+                    <span className="text-sky-400 font-medium text-sm flex items-center gap-1 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-full">
+                      <CheckCircle2 className="w-4 h-4" /> {(selectedPayment.paymentId?.startsWith('mock_') || selectedPayment.paymentId?.startsWith('manual_')) ? 'Concluído' : 'Pix Confirmado'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-slate-400 text-sm">ID da Transação</span>
+                    <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId}>{selectedPayment.paymentId}</span>
+                  </div>
+                </div>
+             </div>
+             <div className="p-4 bg-black/20 rounded-b-2xl">
+                <Button variant="ghost" className="w-full bg-white/5 hover:bg-white/10 text-white transition-colors" onClick={() => setSelectedPayment(null)}>
+                  Fechar Detalhes
+                </Button>
+             </div>
+           </div>
+         </div>
+      )}
+    </>
+  );
+}
