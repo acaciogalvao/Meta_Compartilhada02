@@ -84,7 +84,7 @@ export function GoalSummary({
 
   const handleCharge = async (name: string, phone: string, amount: number) => {
     if (!phone) {
-      showToast(`Cadastre o WhatsApp de ${name} na área de Divisão da Meta.`, "error");
+      showToast(`Cadastre o WhatsApp de ${name} na área de edição.`, "error");
       return;
     }
 
@@ -182,7 +182,7 @@ export function GoalSummary({
         <CardContent className="p-5 sm:p-8">
           <div className="flex justify-between items-start mb-6 w-full">
              <div>
-               <h2 className="text-2xl font-semibold text-white">{itemName || "Nova Meta"}</h2>
+               <h2 className="text-2xl font-semibold text-white">{itemName || (category === 'loan' ? "Novo Empréstimo" : "Nova Meta")}</h2>
                <div className="flex items-center gap-2 mt-1">
                  <p className="text-slate-400">{goalType === 'individual' ? nameP1 : `${nameP1} & ${nameP2}`}</p>
                  {category === 'loan' && <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-rose-500/20 shadow-sm border border-rose-500/30 text-rose-400">Empréstimo ({interestRate}% Juros)</span>}
@@ -250,7 +250,7 @@ export function GoalSummary({
                    </div>
                    <div>
                      <h3 className="font-bold text-white text-lg leading-tight">{nameP1}</h3>
-                     <p className="text-[13px] text-slate-400 font-medium">{contributionP1}% da meta</p>
+                     <p className="text-[13px] text-slate-400 font-medium">{contributionP1}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                    </div>
                  </div>
               </div>
@@ -295,7 +295,7 @@ export function GoalSummary({
                      </div>
                      <div>
                        <h3 className="font-bold text-white text-lg leading-tight">{nameP2}</h3>
-                       <p className="text-[13px] text-slate-400 font-medium">{contributionP2}% da meta</p>
+                       <p className="text-[13px] text-slate-400 font-medium">{contributionP2}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                      </div>
                    </div>
                 </div>

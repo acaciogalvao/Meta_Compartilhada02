@@ -146,7 +146,7 @@ export function GoalForm({
 
   const handleValidation = () => {
     const newErrors: Record<string, string> = {};
-    if (!itemName.trim()) newErrors.itemName = "O nome da meta é obrigatório.";
+    if (!itemName.trim()) newErrors.itemName = category === 'loan' ? "O título do empréstimo é obrigatório." : "O nome da meta é obrigatório.";
     if (!totalValue || Number(totalValue) <= 0) newErrors.totalValue = "O valor deve ser maior que 0.";
     if (!months || Number(months) <= 0) newErrors.months = "Informe o prazo.";
     
@@ -161,7 +161,7 @@ export function GoalForm({
       return digits.length >= 10 && digits.length <= 14;
     };
 
-    if (activeTab === "pessoas") {
+    if (activeTab === "pessoas" || category === "loan") {
       if (!nameP1.trim()) newErrors.nameP1 = "O nome é obrigatório.";
       if (pixKeyP1 && !isValidPix(pixKeyP1, pixTypeP1)) newErrors.pixKeyP1 = "Chave Pix inválida para o tipo selecionado.";
       
@@ -175,10 +175,12 @@ export function GoalForm({
     
     if (Object.keys(newErrors).length > 0) {
       // If errors are on the other tab, switch to it
-      if (newErrors.itemName || newErrors.totalValue || newErrors.months) {
-        if (activeTab !== "meta") setActiveTab("meta");
-      } else if (newErrors.nameP1 || newErrors.nameP2) {
-        if (activeTab !== "pessoas") setActiveTab("pessoas");
+      if (category !== 'loan') {
+        if (newErrors.itemName || newErrors.totalValue || newErrors.months) {
+          if (activeTab !== "meta") setActiveTab("meta");
+        } else if (newErrors.nameP1 || newErrors.nameP2) {
+          if (activeTab !== "pessoas") setActiveTab("pessoas");
+        }
       }
       return false;
     }
@@ -196,34 +198,36 @@ export function GoalForm({
       {/* Header */}
       <div className="flex justify-between items-center p-4 glass-card-subtle sticky top-0 z-10 border-b border-white/10 shadow-sm">
         <button onClick={onCancel} className="text-slate-400 hover:text-white font-medium transition-colors">Cancelar</button>
-        <h2 className="font-bold text-white text-lg">{itemName ? 'Editar Meta' : 'Nova Meta'}</h2>
+        <h2 className="font-bold text-white text-lg">{itemName ? (category === 'loan' ? 'Editar Empréstimo' : 'Editar Meta') : (category === 'loan' ? 'Novo Empréstimo' : 'Nova Meta')}</h2>
         <button onClick={handleSaveClick} className="text-sky-400 hover:text-sky-300 font-bold drop-shadow-[0_0_8px_rgba(56,189,248,0.3)] transition-colors">Salvar</button>
       </div>
 
       {/* Tabs */}
-      <div className="flex p-4 pb-2 z-10">
-        <div className="flex w-full bg-white/5 rounded-2xl p-1 border border-white/10 backdrop-blur-md">
-          <button 
-            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'meta' ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] border border-sky-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-            onClick={() => setActiveTab('meta')}
-          >
-            A Meta
-          </button>
-          <button 
-            className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'pessoas' ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] border border-sky-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-            onClick={() => setActiveTab('pessoas')}
-          >
-            {goalType === 'shared' ? 'As Pessoas' : 'Seus Dados'}
-          </button>
+      {category !== 'loan' && (
+        <div className="flex p-4 pb-2 z-10">
+          <div className="flex w-full bg-white/5 rounded-2xl p-1 border border-white/10 backdrop-blur-md">
+            <button 
+              className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'meta' ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] border border-sky-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+              onClick={() => setActiveTab('meta')}
+            >
+              A Meta
+            </button>
+            <button 
+              className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'pessoas' ? 'bg-sky-500/20 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] border border-sky-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+              onClick={() => setActiveTab('pessoas')}
+            >
+              {goalType === 'shared' ? 'As Pessoas' : 'Seus Dados'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-hide z-10 pb-20">
-        {activeTab === 'meta' && (
+        {(activeTab === 'meta' || category === 'loan') && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="space-y-2 mb-4">
-              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Tipo de Meta</Label>
+              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">{category === 'loan' ? 'Tipo de Empréstimo' : 'Tipo de Meta'}</Label>
               <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
                 <button
                   className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${goalType === "shared" ? "bg-white/10 text-white shadow-sm border border-white/10" : "text-slate-400 hover:text-slate-300"}`}
@@ -241,7 +245,12 @@ export function GoalForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="itemName" className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">O que {goalType === "shared" ? "vocês querem" : "você quer"} conquistar? *</Label>
+              <Label htmlFor="itemName" className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">
+                {category === 'loan' 
+                  ? (goalType === "shared" ? "Qual o título do empréstimo? *" : "Qual o título do empréstimo? *")
+                  : (goalType === "shared" ? "O que vocês querem conquistar? *" : "O que você quer conquistar? *")
+                }
+              </Label>
               <Input 
                 id="itemName" 
                 value={itemName} 
@@ -255,7 +264,7 @@ export function GoalForm({
             </div>
 
             <div className="space-y-2 mb-4">
-              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Categoria da Meta</Label>
+              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">{category === 'loan' ? 'Categoria do Empréstimo' : 'Categoria da Meta'}</Label>
               <select 
                 value={category} 
                 onChange={e => setCategory(e.target.value)}
@@ -372,10 +381,210 @@ export function GoalForm({
                 </div>
               </div>
             )}
+
+            {/* Injected Pessoa fields for Loan */}
+            {category === 'loan' && (
+              <div className="space-y-6 pt-4 border-t border-white/10">
+                <div className="space-y-4">
+                  {goalType === 'shared' && <h3 className="font-bold text-sky-400 text-sm">Dados do Titular 1</h3>}
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-400 font-bold text-xs">Nome *</Label>
+                    <Input 
+                      value={nameP1} 
+                      onChange={e => {
+                        setNameP1(e.target.value);
+                        if (errors.nameP1) setErrors({ ...errors, nameP1: "" });
+                      }} 
+                      className={`rounded-xl bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 ${errors.nameP1 ? 'border-red-400/50' : 'border-white/10'}`} 
+                    />
+                    {errors.nameP1 && <p className="text-[10px] text-red-400 font-medium">{errors.nameP1}</p>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-400 font-bold text-xs">WhatsApp</Label>
+                    <Input 
+                      type="tel"
+                      value={phoneP1} 
+                      onChange={e => setPhoneP1(formatPhone(e.target.value))} 
+                      placeholder="(99) 99999-9999"
+                      className="rounded-xl border-white/10 bg-white/5 text-white placeholder-slate-600 h-11 focus-visible:ring-sky-500/50" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-400 font-bold text-xs">Chave Pix</Label>
+                    <div className="flex gap-2">
+                        <select
+                          value={pixTypeP1}
+                          onChange={e => {
+                            setPixTypeP1(e.target.value);
+                            setPixKeyP1(formatPixKeyInput(pixKeyP1, e.target.value));
+                          }}
+                          className="rounded-xl border border-white/10 bg-white/5 text-white h-11 px-2 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none text-[11px] w-[95px] sm:w-[120px] shrink-0"
+                        >
+                          <option value="celular" className="text-slate-900">Celular</option>
+                          <option value="cpf_cnpj" className="text-slate-900">CPF/CNPJ</option>
+                          <option value="email" className="text-slate-900">E-mail</option>
+                          <option value="random" className="text-slate-900">Aleatória</option>
+                        </select>
+                        <Input 
+                          value={pixKeyP1} 
+                          onChange={e => {
+                            setPixKeyP1(formatPixKeyInput(e.target.value, pixTypeP1));
+                            if (errors.pixKeyP1) setErrors({ ...errors, pixKeyP1: "" });
+                          }} 
+                          className={`rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 flex-1 ${errors.pixKeyP1 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
+                          placeholder={pixTypeP1 === 'celular' ? '(99) 99999-9999' : pixTypeP1 === 'cpf_cnpj' ? '000.000.000-00' : pixTypeP1 === 'email' ? 'email@exemplo.com' : 'Aleatória'}
+                        />
+                    </div>
+                    {errors.pixKeyP1 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP1}</p>}
+                  </div>
+                  <div className="space-y-1.5 pt-2">
+                    <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                    <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                      {['daily', 'weekly', 'monthly'].map(freq => (
+                        <button
+                          key={freq}
+                          onClick={() => setFrequencyP1(freq)}
+                          className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP1 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                          {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {frequencyP1 === 'weekly' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
+                        <select 
+                          value={dueDayP1} 
+                          onChange={e => setDueDayP1(Number(e.target.value))}
+                          className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                        >
+                          <option value={0} className="bg-slate-900">Domingo</option>
+                          <option value={1} className="bg-slate-900">Segunda-feira</option>
+                          <option value={2} className="bg-slate-900">Terça-feira</option>
+                          <option value={3} className="bg-slate-900">Quarta-feira</option>
+                          <option value={4} className="bg-slate-900">Quinta-feira</option>
+                          <option value={5} className="bg-slate-900">Sexta-feira</option>
+                          <option value={6} className="bg-slate-900">Sábado</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {frequencyP1 === 'monthly' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
+                        <select 
+                          value={dueDayP1} 
+                          onChange={e => setDueDayP1(Number(e.target.value))}
+                          className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                        >
+                          {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {goalType === 'shared' && (
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <h3 className="font-bold text-sky-400 text-sm">Dados do Titular 2</h3>
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-400 font-bold text-xs">Nome *</Label>
+                      <Input 
+                        value={nameP2} 
+                        onChange={e => {
+                          setNameP2(e.target.value);
+                          if (errors.nameP2) setErrors({ ...errors, nameP2: "" });
+                        }} 
+                        className={`rounded-xl bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 ${errors.nameP2 ? 'border-red-400/50' : 'border-white/10'}`} 
+                      />
+                      {errors.nameP2 && <p className="text-[10px] text-red-400 font-medium">{errors.nameP2}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-400 font-bold text-xs">WhatsApp</Label>
+                      <Input 
+                        type="tel"
+                        value={phoneP2} 
+                        onChange={e => setPhoneP2(formatPhone(e.target.value))} 
+                        placeholder="(99) 99999-9999"
+                        className="rounded-xl border-white/10 bg-white/5 text-white placeholder-slate-600 h-11 focus-visible:ring-sky-500/50" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-400 font-bold text-xs">Chave Pix</Label>
+                      <div className="flex gap-2">
+                        <select value={pixTypeP2} onChange={e => { setPixTypeP2(e.target.value); setPixKeyP2(formatPixKeyInput(pixKeyP2, e.target.value)); }} className="rounded-xl border border-white/10 bg-white/5 text-white h-11 px-2 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none text-[11px] w-[95px] sm:w-[120px] shrink-0">
+                          <option value="celular" className="text-slate-900">Celular</option>
+                          <option value="cpf_cnpj" className="text-slate-900">CPF/CNPJ</option>
+                          <option value="email" className="text-slate-900">E-mail</option>
+                          <option value="random" className="text-slate-900">Aleatória</option>
+                        </select>
+                        <Input value={pixKeyP2} 
+                          onChange={e => { setPixKeyP2(formatPixKeyInput(e.target.value, pixTypeP2)); if (errors.pixKeyP2) setErrors({ ...errors, pixKeyP2: "" }); }} 
+                          className={`flex-1 rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 ${errors.pixKeyP2 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
+                          placeholder={pixTypeP2 === "celular" ? "(99) 99999-9999" : pixTypeP2 === "cpf_cnpj" ? "000.000.000-00" : pixTypeP2 === "email" ? "email@exemplo.com" : "Aleatória"}
+                        />
+                      </div>
+                      {errors.pixKeyP2 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP2}</p>}
+                    </div>
+                    <div className="space-y-1.5 pt-2">
+                      <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                      <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                        {['daily', 'weekly', 'monthly'].map(freq => (
+                          <button
+                            key={freq}
+                            onClick={() => setFrequencyP2(freq)}
+                            className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP2 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                          >
+                            {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {frequencyP2 === 'weekly' && (
+                        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                          <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
+                          <select 
+                            value={dueDayP2} 
+                            onChange={e => setDueDayP2(Number(e.target.value))}
+                            className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                          >
+                            <option value={0} className="bg-slate-900">Domingo</option>
+                            <option value={1} className="bg-slate-900">Segunda-feira</option>
+                            <option value={2} className="bg-slate-900">Terça-feira</option>
+                            <option value={3} className="bg-slate-900">Quarta-feira</option>
+                            <option value={4} className="bg-slate-900">Quinta-feira</option>
+                            <option value={5} className="bg-slate-900">Sexta-feira</option>
+                            <option value={6} className="bg-slate-900">Sábado</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {frequencyP2 === 'monthly' && (
+                        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                          <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
+                          <select 
+                            value={dueDayP2} 
+                            onChange={e => setDueDayP2(Number(e.target.value))}
+                            className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                          >
+                            {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                              <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'pessoas' && (
+        {(activeTab === 'pessoas' && category !== 'loan') && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200 pb-10">
             {/* Pessoa 1 */}
             <Card className="glass-card-subtle border-white/10 rounded-2xl shadow-sm overflow-hidden bg-transparent">

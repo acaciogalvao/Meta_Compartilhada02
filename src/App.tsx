@@ -433,7 +433,7 @@ export default function App() {
 
   const handleGeneratePix = async () => {
     if (!currentGoalId) {
-      showToast("Por favor, salve a meta antes de gerar um Pix.");
+      showToast("Por favor, salve os dados antes de gerar um Pix.");
       return;
     }
     const amount = Number(pixAmount);
@@ -498,7 +498,7 @@ export default function App() {
 
   const handleSimulatePayment = async () => {
     if (!currentGoalId) {
-      showToast("Por favor, salve a meta antes de simular um pagamento.");
+      showToast("Por favor, salve os dados antes de simular um pagamento.");
       return;
     }
     const amount = Number(pixAmount);
