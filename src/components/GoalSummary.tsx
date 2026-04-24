@@ -87,6 +87,29 @@ export function GoalSummary({
       showToast(`Cadastre o WhatsApp de ${name} na área de Divisão da Meta.`, "error");
       return;
     }
+
+    if (category === 'loan') {
+      const isP1 = name === nameP1;
+      const userSaved = Number(isP1 ? savedP1 : savedP2) || 0;
+      const userRemaining = isP1 ? results.remainingP1 : results.remainingP2;
+      const userPaidPeriodsCount = isP1 ? results.paidPeriodsCountP1 : results.paidPeriodsCountP2;
+      const userTotalPeriods = isP1 ? results.totalPeriodsP1 : results.totalPeriodsP2;
+      const freqLabel = getFreqLabel(isP1 ? frequencyP1 : frequencyP2).toLowerCase();
+      
+      const formatPaidSequence = (paid: number, total: number) => {
+         if (paid <= 0) return `00/${String(total).padStart(2, '0')}`;
+         const arr = Array.from({length: Math.min(paid, total)}, (_, i) => String(i + 1).padStart(2, '0'));
+         const totalStr = String(total).padStart(2, '0');
+         return `${arr.join('-')}/${totalStr}`;
+      };
+
+      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Pagamentos (Parcelas):* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})`;
+
+      const encodedText = encodeURIComponent(text);
+      const cleanPhone = phone.replace(/\D/g, "");
+      window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodedText}`, '_blank');
+      return;
+    }
     
     try {
       showToast("Gerando código Pix...", "success");
@@ -103,10 +126,11 @@ export function GoalSummary({
         return firstWord.endsWith('a') || firstWord.endsWith('ely') || firstWord.endsWith('ele') || firstWord.endsWith('eli');
       };
       
-      const term = isFeminine(name) ? 'sua parcela' : 'seu pagamento';
+      const term = category === 'loan' ? 'o pagamento' : (isFeminine(name) ? 'sua parcela' : 'seu pagamento');
       const adjective = isFeminine(name) ? 'atrasada' : 'atrasado';
+      const entityLabel = category === 'loan' ? 'do empréstimo' : 'da meta';
       
-      const text = `Oi ${name}, vi que ${term} da meta *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!`;
+      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!`;
 
       setChargeModalState({
         isOpen: true,

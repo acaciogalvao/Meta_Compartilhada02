@@ -582,8 +582,28 @@ export default function App() {
       return remainingAmount / totalMonthsCalc; // monthly
     };
 
+    const getPeriodsCount = (rawTime: number, unit: string, freq: string) => {
+      if (rawTime <= 0) return 1;
+      let totalDays = rawTime;
+      if (unit === 'weeks') totalDays = rawTime * 7;
+      if (unit === 'months') totalDays = rawTime * 30.4166;
+      
+      if (freq === 'daily') return Math.max(1, Math.round(totalDays));
+      if (freq === 'weekly') return Math.max(1, Math.round(totalDays / 7));
+      return Math.max(1, Math.round(totalDays / 30.4166));
+    };
+
     const installmentP1 = getInstallment(remainingP1, timeValue, durationUnit, frequencyP1);
     const installmentP2 = getInstallment(remainingP2, timeValue, durationUnit, frequencyP2);
+
+    const totalPeriodsP1 = getPeriodsCount(timeValue, durationUnit, frequencyP1);
+    const totalPeriodsP2 = getPeriodsCount(timeValue, durationUnit, frequencyP2);
+
+    const baseInstallmentP1 = getInstallment(totalP1, timeValue, durationUnit, frequencyP1);
+    const baseInstallmentP2 = getInstallment(totalP2, timeValue, durationUnit, frequencyP2);
+
+    const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor(sP1 / baseInstallmentP1) : 0;
+    const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor(sP2 / baseInstallmentP2) : 0;
 
     const monthlyP1 = totalMonths > 0 ? remainingP1 / totalMonths : 0;
     const monthlyP2 = totalMonths > 0 ? remainingP2 / totalMonths : 0;
@@ -667,6 +687,10 @@ export default function App() {
       dailyP1,
       dailyP2,
       dailyTotal,
+      totalPeriodsP1,
+      paidPeriodsCountP1,
+      totalPeriodsP2,
+      paidPeriodsCountP2,
       chartData,
       isLateP1,
       isLateP2
@@ -712,38 +736,76 @@ export default function App() {
   };
 
   const handleExportText = () => {
-    let text = `
-🎯 Nossa Meta: ${itemName || 'Sem nome'}
+    let text = "";
+    const formatPaidSequence = (paid: number, total: number) => {
+       if (paid <= 0) return `00/${String(total).padStart(2, '0')}`;
+       const arr = Array.from({length: Math.min(paid, total)}, (_, i) => String(i + 1).padStart(2, '0'));
+       const totalStr = String(total).padStart(2, '0');
+       return `${arr.join('-')}/${totalStr}`;
+    };
+
+    if (category === 'loan') {
+        text = `
+🏦 Título do Empréstimo: ${itemName || 'Empréstimo'}
 💰 Valor Total: ${formatCurrency(results.total)}
-${category === 'loan' ? `📈 Juros: ${interestRate}%\n` : ''}⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
-✅ Já guardamo${goalType === 'individual' ? 's' : 's'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
+📈 Juros: ${interestRate}%
+⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+`;
+        if (goalType === "shared") {
+            text += `
+👥 Resumo dos Pagamentos:
+👤 ${nameP1}:
+   - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
+   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+
+👤 ${nameP2}:
+   - Valor já quitado: ${formatCurrency(Number(savedP2) || 0)}
+   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
+   - Restante a quitar: ${formatCurrency(results.remainingP2)}
+`;
+        } else {
+            text += `
+👤 Quitação de ${nameP1}:
+   - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
+   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+`;
+        }
+    } else {
+        text = `
+🎯 ${goalType === 'individual' ? 'Minha Meta' : 'Nossa Meta'}: ${itemName || 'Sem nome'}
+💰 Valor Total: ${formatCurrency(results.total)}
+⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+✅ Já ${goalType === 'individual' ? 'guardei' : 'guardamos'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
 📉 Falta: ${formatCurrency(results.remaining)}
 `;
 
-    if (goalType === "shared") {
-      text += `
+        if (goalType === "shared") {
+          text += `
 📊 Resumo Individual:
 👤 ${nameP1} (${contributionP1}%):
-   - Já pagou: ${formatCurrency(Number(savedP1) || 0)}
-   - Falta pagar: ${formatCurrency(results.remainingP1)}
-   - Parcela: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Já guardou: ${formatCurrency(Number(savedP1) || 0)}
+   - Falta guardar: ${formatCurrency(results.remainingP1)}
+   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
 👤 ${nameP2} (${contributionP2}%):
-   - Já pagou: ${formatCurrency(Number(savedP2) || 0)}
-   - Falta pagar: ${formatCurrency(results.remainingP2)}
-   - Parcela: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
+   - Já guardou: ${formatCurrency(Number(savedP2) || 0)}
+   - Falta guardar: ${formatCurrency(results.remainingP2)}
+   - Guardar: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
 
-💵 Total das parcelas por mês: ${formatCurrency(results.monthlyTotal)}
+💵 Total a guardar por mês: ${formatCurrency(results.monthlyTotal)}
 
 Bora conquistar juntos! ❤️`;
-    } else {
-      text += `
+        } else {
+          text += `
 📊 Meu Resumo:
-   - Já paguei: ${formatCurrency(Number(savedP1) || 0)}
-   - Falta pagar: ${formatCurrency(results.remainingP1)}
-   - Parcela: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Já guardei: ${formatCurrency(Number(savedP1) || 0)}
+   - Falta guardar: ${formatCurrency(results.remainingP1)}
+   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
 Bora conquistar! 💪`;
+        }
     }
 
     const encodedText = encodeURIComponent(text.trim());
