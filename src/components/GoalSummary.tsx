@@ -97,13 +97,12 @@ export function GoalSummary({
       const freqLabel = getFreqLabel(isP1 ? frequencyP1 : frequencyP2).toLowerCase();
       
       const formatPaidSequence = (paid: number, total: number) => {
-         if (paid <= 0) return `00/${String(total).padStart(2, '0')}`;
-         const arr = Array.from({length: Math.min(paid, total)}, (_, i) => String(i + 1).padStart(2, '0'));
+         const current = Math.min(paid + 1, total);
          const totalStr = String(total).padStart(2, '0');
-         return `${arr.join('-')}/${totalStr}`;
+         return `${String(current).padStart(2, '0')}/${totalStr}`;
       };
 
-      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Pagamentos (Parcelas):* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})`;
+      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})`;
 
       const encodedText = encodeURIComponent(text);
       const cleanPhone = phone.replace(/\D/g, "");

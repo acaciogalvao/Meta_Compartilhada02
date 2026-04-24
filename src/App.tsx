@@ -593,14 +593,14 @@ export default function App() {
       return Math.max(1, Math.round(totalDays / 30.4166));
     };
 
-    const installmentP1 = getInstallment(remainingP1, timeValue, durationUnit, frequencyP1);
-    const installmentP2 = getInstallment(remainingP2, timeValue, durationUnit, frequencyP2);
+    const baseInstallmentP1 = getInstallment(totalP1, timeValue, durationUnit, frequencyP1);
+    const baseInstallmentP2 = getInstallment(totalP2, timeValue, durationUnit, frequencyP2);
+
+    const installmentP1 = category === 'loan' ? baseInstallmentP1 : getInstallment(remainingP1, timeValue, durationUnit, frequencyP1);
+    const installmentP2 = category === 'loan' ? baseInstallmentP2 : getInstallment(remainingP2, timeValue, durationUnit, frequencyP2);
 
     const totalPeriodsP1 = getPeriodsCount(timeValue, durationUnit, frequencyP1);
     const totalPeriodsP2 = getPeriodsCount(timeValue, durationUnit, frequencyP2);
-
-    const baseInstallmentP1 = getInstallment(totalP1, timeValue, durationUnit, frequencyP1);
-    const baseInstallmentP2 = getInstallment(totalP2, timeValue, durationUnit, frequencyP2);
 
     const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor(sP1 / baseInstallmentP1) : 0;
     const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor(sP2 / baseInstallmentP2) : 0;
@@ -667,6 +667,7 @@ export default function App() {
     const isLateP2 = checkIsLate('P2', frequencyP2, dueDayP2);
 
     return {
+      baseTotal,
       total,
       time: timeValue,
       saved,
@@ -738,16 +739,16 @@ export default function App() {
   const handleExportText = () => {
     let text = "";
     const formatPaidSequence = (paid: number, total: number) => {
-       if (paid <= 0) return `00/${String(total).padStart(2, '0')}`;
-       const arr = Array.from({length: Math.min(paid, total)}, (_, i) => String(i + 1).padStart(2, '0'));
+       const current = Math.min(paid + 1, total);
        const totalStr = String(total).padStart(2, '0');
-       return `${arr.join('-')}/${totalStr}`;
+       return `${String(current).padStart(2, '0')}/${totalStr}`;
     };
 
     if (category === 'loan') {
         text = `
 🏦 Título do Empréstimo: ${itemName || 'Empréstimo'}
-💰 Valor Total: ${formatCurrency(results.total)}
+💰 Valor Original (Sem Juros): ${formatCurrency(results.baseTotal)}
+💰 Valor Total (Com Juros): ${formatCurrency(results.total)}
 📈 Juros: ${interestRate}%
 ⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
 `;
@@ -756,19 +757,19 @@ export default function App() {
 👥 Resumo dos Pagamentos:
 👤 ${nameP1}:
    - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
-   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Restante a quitar: ${formatCurrency(results.remainingP1)}
 
 👤 ${nameP2}:
    - Valor já quitado: ${formatCurrency(Number(savedP2) || 0)}
-   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
+   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
    - Restante a quitar: ${formatCurrency(results.remainingP2)}
 `;
         } else {
             text += `
 👤 Quitação de ${nameP1}:
    - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
-   - Pagamento: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Restante a quitar: ${formatCurrency(results.remainingP1)}
 `;
         }
