@@ -19,12 +19,14 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
   const [goalsList, setGoalsList] = useState<any[]>([]);
   const [currentGoalId, setCurrentGoalId] = useState<string>("");
+  const [currentSection, setCurrentSection] = useState<"metas" | "emprestimos">("metas");
 
   const [category, setCategory] = useState("saving");
   const [interestRate, setInterestRate] = useState("0");
   const [itemName, setItemName] = useState("");
   const [totalValue, setTotalValue] = useState("");
-  const [months, setMonths] = useState("12");
+  const [months, setMonths] = useState("12"); // Now represents duration value
+  const [durationUnit, setDurationUnit] = useState<"days" | "weeks" | "months">("months");
   const [contributionP1, setContributionP1] = useState("50");
   const [goalType, setGoalType] = useState<"individual" | "shared">("shared");
   const [savedP1, setSavedP1] = useState("");
@@ -72,6 +74,7 @@ export default function App() {
     setItemName("");
     setTotalValue("");
     setMonths("12");
+    setDurationUnit("months");
     setContributionP1("50");
     setGoalType("shared");
     setNameP1("Você");
@@ -96,6 +99,7 @@ export default function App() {
       if (data.itemName !== undefined) setItemName(data.itemName);
       if (data.totalValue !== undefined) setTotalValue(data.totalValue.toString());
       if (data.months !== undefined) setMonths(data.months.toString());
+      if (data.durationUnit !== undefined) setDurationUnit(data.durationUnit);
       if (data.contributionP1 !== undefined) setContributionP1(data.contributionP1.toString());
       if (data.type !== undefined) setGoalType(data.type);
       if (data.nameP1 !== undefined) setNameP1(data.nameP1);
@@ -262,6 +266,7 @@ export default function App() {
         itemName,
         totalValue: Number(totalValue),
         months: Number(months),
+        durationUnit,
         contributionP1: goalType === "individual" ? 100 : Number(contributionP1),
         nameP1,
         nameP2,
@@ -323,12 +328,6 @@ export default function App() {
       console.error("Error saving goal data:", error);
       showToast(error.message || "Erro de conexão ao salvar metas.", "error");
     }
-  };
-
-  const handleCreateNewGoal = () => {
-    clearGoalData();
-    setIsEditing(true);
-    setActiveTab("inicio");
   };
 
   const handleClearHistoryClick = () => {
@@ -547,8 +546,15 @@ export default function App() {
   const contributionP2 = 100 - (Number(contributionP1) || 0);
 
   const results = useMemo(() => {
-    const total = Number(totalValue) || 0;
-    const time = Number(months) || 1;
+    const baseTotal = Number(totalValue) || 0;
+    const isLoan = category === 'loan';
+    const total = isLoan ? baseTotal * (1 + (Number(interestRate) || 0) / 100) : baseTotal;
+    
+    const timeValue = Number(months) || 1;
+    let totalMonths = timeValue;
+    if (durationUnit === 'days') totalMonths = timeValue / 30.4166;
+    if (durationUnit === 'weeks') totalMonths = timeValue / 4.3333;
+
     const sP1 = Number(savedP1) || 0;
     const sP2 = Number(savedP2) || 0;
     const saved = sP1 + sP2;
@@ -562,18 +568,25 @@ export default function App() {
     const remainingP1 = Math.max(0, totalP1 - sP1);
     const remainingP2 = Math.max(0, totalP2 - sP2);
 
-    const getInstallment = (remainingAmount: number, monthsTime: number, freq: string) => {
-      if (monthsTime <= 0) return 0;
-      if (freq === 'daily') return remainingAmount / (monthsTime * 30.4166);
-      if (freq === 'weekly') return remainingAmount / (monthsTime * 4.3333);
-      return remainingAmount / monthsTime; // monthly
+    const getInstallment = (remainingAmount: number, rawTime: number, unit: string, freq: string) => {
+      if (rawTime <= 0) return 0;
+      let totalDays = rawTime;
+      if (unit === 'weeks') totalDays = rawTime * 7;
+      if (unit === 'months') totalDays = rawTime * 30.4166;
+      
+      const totalWeeks = totalDays / 7;
+      const totalMonthsCalc = totalDays / 30.4166;
+
+      if (freq === 'daily') return remainingAmount / totalDays;
+      if (freq === 'weekly') return remainingAmount / totalWeeks;
+      return remainingAmount / totalMonthsCalc; // monthly
     };
 
-    const installmentP1 = getInstallment(remainingP1, time, frequencyP1);
-    const installmentP2 = getInstallment(remainingP2, time, frequencyP2);
+    const installmentP1 = getInstallment(remainingP1, timeValue, durationUnit, frequencyP1);
+    const installmentP2 = getInstallment(remainingP2, timeValue, durationUnit, frequencyP2);
 
-    const monthlyP1 = time > 0 ? remainingP1 / time : 0;
-    const monthlyP2 = time > 0 ? remainingP2 / time : 0;
+    const monthlyP1 = totalMonths > 0 ? remainingP1 / totalMonths : 0;
+    const monthlyP2 = totalMonths > 0 ? remainingP2 / totalMonths : 0;
     const monthlyTotal = monthlyP1 + monthlyP2;
 
     const weeklyP1 = monthlyP1 / 4.3333;
@@ -587,13 +600,17 @@ export default function App() {
     // Chart Data Projection
     const chartData = [];
     let currentSaved = saved;
-    for (let i = 0; i <= time; i++) {
+    // We project up to total time points based on duration unit
+    for (let i = 0; i <= timeValue; i++) {
+        const unitLabel = durationUnit === 'days' ? 'Dia' : durationUnit === 'weeks' ? 'Sem' : 'Mês';
       chartData.push({
-        month: i === 0 ? 'Hoje' : `Mês ${i}`,
+        month: i === 0 ? 'Hoje' : `${unitLabel} ${i}`,
         acumulado: currentSaved,
         meta: total
       });
-      currentSaved += monthlyTotal;
+      if (durationUnit === 'days') currentSaved += dailyTotal;
+      else if (durationUnit === 'weeks') currentSaved += weeklyTotal;
+      else currentSaved += monthlyTotal;
     }
 
     // Determine if late based on payments
@@ -631,7 +648,7 @@ export default function App() {
 
     return {
       total,
-      time,
+      time: timeValue,
       saved,
       remaining,
       progressPercent,
@@ -698,7 +715,7 @@ export default function App() {
     let text = `
 🎯 Nossa Meta: ${itemName || 'Sem nome'}
 💰 Valor Total: ${formatCurrency(results.total)}
-${category === 'loan' ? `📈 Juros: ${interestRate}% a.m.\n` : ''}⏳ Prazo: ${results.time} meses
+${category === 'loan' ? `📈 Juros: ${interestRate}%\n` : ''}⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
 ✅ Já guardamo${goalType === 'individual' ? 's' : 's'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
 📉 Falta: ${formatCurrency(results.remaining)}
 `;
@@ -733,6 +750,19 @@ Bora conquistar! 💪`;
     window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
   };
 
+  const handleCreateNewGoal = () => {
+    clearGoalData();
+    if (currentSection === "emprestimos") {
+        setCategory("loan");
+    } else {
+        setCategory("saving");
+    }
+    setIsEditing(true);
+    setActiveTab("inicio");
+  };
+
+  const filteredGoalsList = goalsList.filter(g => currentSection === "emprestimos" ? g.category === "loan" : g.category !== "loan");
+
   return (
     <>
     <div className="min-h-screen w-full flex justify-center font-sans selection:bg-sky-500/30 text-white relative">
@@ -742,6 +772,36 @@ Bora conquistar! 💪`;
           <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white text-sm font-medium transition-all w-11/12 max-w-sm text-center ${toastMessage.type === 'success' ? 'bg-emerald-500/90 backdrop-blur border border-emerald-400/20' : 'bg-rose-500/90 backdrop-blur border border-rose-400/20'}`}>
             {toastMessage.text}
           </div>
+        )}
+
+        {/* Global Tabs Navigation (Metas vs Empréstimos) */}
+        {!isEditing && (
+            <div className="flex justify-center mt-6 mb-4">
+                <div className="bg-white/5 p-1 rounded-full border border-white/10 flex gap-1">
+                    <button 
+                        onClick={() => {
+                            setCurrentSection("metas");
+                            const metas = goalsList.filter(g => g.category !== "loan");
+                            if (metas.length > 0) setCurrentGoalId(metas[0]._id);
+                            else clearGoalData();
+                        }}
+                        className={`px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all ${currentSection === "metas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-white"}`}
+                    >
+                        Minhas Metas
+                    </button>
+                    <button 
+                        onClick={() => {
+                            setCurrentSection("emprestimos");
+                            const loans = goalsList.filter(g => g.category === "loan");
+                            if (loans.length > 0) setCurrentGoalId(loans[0]._id);
+                            else clearGoalData();
+                        }}
+                        className={`px-6 py-2 rounded-full text-sm font-bold tracking-wide transition-all ${currentSection === "emprestimos" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-white"}`}
+                    >
+                        Empréstimos
+                    </button>
+                </div>
+            </div>
         )}
 
         {isEditing && (
@@ -758,6 +818,8 @@ Bora conquistar! 💪`;
           setTotalValue={setTotalValue}
           months={months}
           setMonths={setMonths}
+          durationUnit={durationUnit}
+          setDurationUnit={setDurationUnit}
           nameP1={nameP1}
           setNameP1={setNameP1}
           nameP2={nameP2}
@@ -795,8 +857,12 @@ Bora conquistar! 💪`;
         {/* Header */}
         <header className="flex justify-between items-end mb-8">
             <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-none">{goalType === 'individual' ? 'Meta Individual' : 'Meta Compartilhada'}</h1>
-                <p className="text-slate-400 mt-2 uppercase text-xs tracking-widest font-semibold">{goalType === 'individual' ? 'Acompanhe o seu progresso financeiro' : 'Dashboard de Controle Financeiro'}</p>
+                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-none">
+                    {currentSection === 'emprestimos' ? 'Meus Empréstimos' : (goalType === 'individual' ? 'Meta Individual' : 'Meta Compartilhada')}
+                </h1>
+                <p className="text-slate-400 mt-2 uppercase text-xs tracking-widest font-semibold">
+                    {currentSection === 'emprestimos' ? 'Controle suas dívidas e quitações' : (goalType === 'individual' ? 'Acompanhe o seu progresso financeiro' : 'Dashboard de Controle Financeiro')}
+                </p>
             </div>
             <div className="text-right flex items-center gap-2">
               <Button onClick={handleCreateNewGoal} className="w-10 h-10 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 shadow-none p-0 flex items-center justify-center shrink-0">
@@ -807,16 +873,19 @@ Bora conquistar! 💪`;
 
         {/* Goals List Navigation */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-          {goalsList.map(goal => (
+          {filteredGoalsList.map(goal => (
             <Button 
               key={goal._id} 
               variant={currentGoalId === goal._id ? "default" : "outline"}
               className={`${currentGoalId === goal._id ? "bg-white text-slate-900 border-white shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "text-slate-300 border-white/10 bg-white/5 hover:bg-white/10"} whitespace-nowrap rounded-full h-8 px-4 text-xs font-semibold tracking-wide transition-all`}
               onClick={() => { setCurrentGoalId(goal._id); setIsEditing(false); }}
             >
-              {goal.itemName || "Nova Meta"}
+              {goal.itemName || (currentSection === 'emprestimos' ? "Novo Empréstimo" : "Nova Meta")}
             </Button>
           ))}
+          {filteredGoalsList.length === 0 && (
+             <p className="text-sm text-slate-500 italic">Nenhum item cadastrado nesta sessão.</p>
+          )}
         </div>
 
         {activeTab === "inicio" ? (
@@ -846,6 +915,7 @@ Bora conquistar! 💪`;
                   phoneP2={phoneP2}
                   itemName={itemName}
                   months={months}
+                  durationUnit={durationUnit}
                   formatCurrency={formatCurrency}
                   getFreqLabel={getFreqLabel}
                   handleExportText={handleExportText}

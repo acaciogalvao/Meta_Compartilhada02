@@ -28,6 +28,7 @@ interface GoalSummaryProps {
   phoneP2: string;
   itemName: string;
   months: string;
+  durationUnit: "days" | "weeks" | "months";
   formatCurrency: (value: number) => string;
   getFreqLabel: (freq: string) => string;
   handleExportText: () => void;
@@ -56,6 +57,7 @@ export function GoalSummary({
   phoneP2,
   itemName,
   months,
+  durationUnit,
   formatCurrency,
   getFreqLabel,
   handleExportText,
@@ -160,7 +162,7 @@ export function GoalSummary({
                <h2 className="text-2xl font-semibold text-white">{itemName || "Nova Meta"}</h2>
                <div className="flex items-center gap-2 mt-1">
                  <p className="text-slate-400">{goalType === 'individual' ? nameP1 : `${nameP1} & ${nameP2}`}</p>
-                 {category === 'loan' && <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-rose-500/20 shadow-sm border border-rose-500/30 text-rose-400">Empréstimo ({interestRate}% a.m.)</span>}
+                 {category === 'loan' && <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-rose-500/20 shadow-sm border border-rose-500/30 text-rose-400">Empréstimo ({interestRate}% Juros)</span>}
                </div>
              </div>
              <div className="flex gap-1 shrink-0">
@@ -190,7 +192,9 @@ export function GoalSummary({
                      <Clock className="w-4 h-4"/>
                      <span className="text-xs font-medium">Prazo</span>
                   </div>
-                  <span className="font-bold text-white text-lg">{months} meses</span>
+                  <span className="font-bold text-white text-lg">
+                    {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+                  </span>
                </div>
                <div className="glass-card-subtle p-4">
                   <div className="flex items-center gap-2 text-slate-400 mb-1">

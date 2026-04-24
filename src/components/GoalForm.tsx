@@ -17,6 +17,8 @@ interface GoalFormProps {
   setTotalValue: (val: string) => void;
   months: string;
   setMonths: (val: string) => void;
+  durationUnit: "days" | "weeks" | "months";
+  setDurationUnit: (val: "days" | "weeks" | "months") => void;
   nameP1: string;
   setNameP1: (val: string) => void;
   nameP2: string;
@@ -52,6 +54,7 @@ export function GoalForm({
   itemName, setItemName,
   totalValue, setTotalValue,
   months, setMonths,
+  durationUnit, setDurationUnit,
   nameP1, setNameP1,
   nameP2, setNameP2,
   pixKeyP1, setPixKeyP1,
@@ -282,7 +285,7 @@ export function GoalForm({
 
               {category === 'loan' && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-right-2">
-                  <Label htmlFor="interestRate" className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">% Juros (a.m)</Label>
+                  <Label htmlFor="interestRate" className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">% Juros (Total)</Label>
                   <div className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-sm h-12">
                     <Input 
                       id="interestRate" 
@@ -300,10 +303,21 @@ export function GoalForm({
               )}
             </div>
 
+            {category === 'loan' && Number(totalValue) > 0 && (
+               <div className="text-xs text-slate-300 bg-sky-500/10 border border-sky-500/20 rounded-xl p-3 flex justify-between items-center">
+                 <span>Total a pagar com Juros:</span>
+                 <strong className="text-sm text-sky-400">
+                    {formatCurrency(Number(totalValue) * (1 + (Number(interestRate) || 0) / 100))}
+                 </strong>
+               </div>
+            )}
+
             <div className="space-y-3">
-              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">Prazo em meses — {months} meses *</Label>
+              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">
+                Prazo — {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'} *
+              </Label>
               <div className="flex items-center gap-3">
-                <div className={`flex bg-white/5 border rounded-xl overflow-hidden shadow-sm h-12 ${errors.months ? 'border-red-400/50' : 'border-white/10'}`}>
+                <div className={`flex flex-1 bg-white/5 border rounded-xl overflow-hidden shadow-sm h-12 ${errors.months ? 'border-red-400/50' : 'border-white/10'}`}>
                   <Input 
                     type="number"
                     value={months}
@@ -311,11 +325,17 @@ export function GoalForm({
                       setMonths(e.target.value);
                       if (errors.months) setErrors({ ...errors, months: "" });
                     }}
-                    className="w-16 border-0 bg-transparent text-center font-bold text-white focus-visible:ring-0 h-full"
+                    className="w-full flex-1 border-0 bg-transparent text-center font-bold text-white focus-visible:ring-0 h-full"
                   />
-                  <div className="flex items-center px-3 text-slate-400 text-sm border-l border-white/10 bg-black/20">
-                    meses
-                  </div>
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value as any)}
+                    className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
+                  >
+                    <option value="days" className="bg-slate-900">dias</option>
+                    <option value="weeks" className="bg-slate-900">semanas</option>
+                    <option value="months" className="bg-slate-900">meses</option>
+                  </select>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1">
                   {commonMonths.map(m => (

@@ -37,6 +37,7 @@ const goalSchema = new mongoose.Schema({
   itemName: String,
   totalValue: Number,
   months: Number,
+  durationUnit: { type: String, default: "months" },
   contributionP1: Number,
   nameP1: String,
   nameP2: String,
