@@ -34,7 +34,16 @@ outputType = "webview"
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 24678
+externalPort = 3001
+
 [deployment]
 deploymentTarget = "autoscale"
 run = ["node", "--loader", "tsx/esm", "server.ts"]
 build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+MONGODB_URI = "mongodb+srv://MetaCompartilhada:metacompartilhada@meta0.ajixysu.mongodb.net/?appName=Meta0"
