@@ -103,8 +103,26 @@ export function PixModal({
               className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === installmentAmount && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
             >
               <Zap className="w-4 h-4 mr-2" />
-              Parcela: {formatCurrency(installmentAmount)}
+              1 Parcela: {formatCurrency(installmentAmount)}
             </button>
+            {remainingAmount >= installmentAmount * 2 && (
+              <button 
+                onClick={() => { setPixAmount((installmentAmount * 2).toFixed(2)); setPixCode(""); }}
+                className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === parseFloat((installmentAmount * 2).toFixed(2)) && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                2 Parcelas: {formatCurrency(installmentAmount * 2)}
+              </button>
+            )}
+            {remainingAmount >= installmentAmount * 3 && (
+              <button 
+                onClick={() => { setPixAmount((installmentAmount * 3).toFixed(2)); setPixCode(""); }}
+                className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === parseFloat((installmentAmount * 3).toFixed(2)) && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                3 Parcelas: {formatCurrency(installmentAmount * 3)}
+              </button>
+            )}
             <button 
               onClick={() => { setPixAmount(remainingAmount.toFixed(2)); setPixCode(""); }}
               className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === remainingAmount && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
