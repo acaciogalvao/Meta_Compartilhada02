@@ -61,6 +61,13 @@ export function PixModal({
   const installmentAmount = currentPayer === "P1" ? installmentP1 : installmentP2;
   const remainingAmount = currentPayer === "P1" ? remainingP1 : remainingP2;
 
+  // Ensure we don't pay more than remaining
+  useEffect(() => {
+    if (showPixModal && Number(pixAmount) > remainingAmount && remainingAmount > 0) {
+      setPixAmount(remainingAmount.toFixed(2));
+    }
+  }, [pixAmount, remainingAmount, setPixAmount, showPixModal]);
+
   // Auto-generate PIX if amount changes and it's valid
   useEffect(() => {
     if (showPixModal && pixAmount && Number(pixAmount) > 0 && !isGeneratingPix && !pixCode && !paymentSuccess) {
@@ -72,6 +79,8 @@ export function PixModal({
   }, [pixAmount, showPixModal]);
 
   if (!showPixModal) return null;
+
+  const currentInstallments = Math.round(Number(pixAmount) / installmentAmount) || 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50 sm:items-center">
@@ -85,16 +94,60 @@ export function PixModal({
           </div>
           <p className="text-sm text-slate-400 mb-4">Pagador: <span className="font-semibold text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">{payerName}</span></p>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 shadow-sm flex items-center">
-            <span className="text-2xl font-medium text-slate-500 mr-2">R$</span>
-            <Input 
-              type="text"
-              inputMode="numeric"
-              value={pixAmount === "" ? "" : formatCurrency(Number(pixAmount)).replace("R$", "").trim()}
-              onChange={(e) => { setPixCode(""); handleCurrencyChange(e, setPixAmount); }}
-              className="text-4xl font-bold text-white border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent placeholder-slate-600"
-              placeholder="0,00"
-            />
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-sm flex items-center">
+              <span className="text-2xl font-medium text-slate-500 mr-2">R$</span>
+              <Input 
+                type="text"
+                inputMode="numeric"
+                value={pixAmount === "" ? "" : formatCurrency(Number(pixAmount)).replace("R$", "").trim()}
+                onChange={(e) => { 
+                  setPixCode(""); 
+                  handleCurrencyChange(e, setPixAmount);
+                }}
+                className="text-4xl font-bold text-white border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent placeholder-slate-600"
+                placeholder="0,00"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-3 shadow-sm">
+              <label className="text-sm text-slate-400 font-bold uppercase tracking-wider">Qtd. Parcelas</label>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => {
+                    if (currentInstallments > 1) {
+                      setPixAmount((installmentAmount * (currentInstallments - 1)).toFixed(2));
+                      setPixCode("");
+                    } else {
+                      setPixAmount("0.00");
+                      setPixCode("");
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center font-bold hover:bg-white/20 transition-colors text-lg"
+                >
+                  -
+                </button>
+                <span className="text-2xl font-bold text-sky-400 w-8 text-center flex-shrink-0">
+                  {installmentAmount > 0 ? currentInstallments : 0}
+                </span>
+                <button 
+                  onClick={() => {
+                    if (installmentAmount <= 0) return;
+                    const nextValue = installmentAmount * (currentInstallments + 1);
+                    if (nextValue <= remainingAmount) {
+                      setPixAmount(nextValue.toFixed(2));
+                      setPixCode("");
+                    } else if (remainingAmount > 0) {
+                      setPixAmount(remainingAmount.toFixed(2));
+                      setPixCode("");
+                    }
+                  }}
+                  className="w-10 h-10 rounded-full shadow-[0_0_10px_rgba(56,189,248,0.2)] bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold hover:bg-sky-500/30 transition-colors text-lg border border-sky-500/30"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
@@ -105,24 +158,6 @@ export function PixModal({
               <Zap className="w-4 h-4 mr-2" />
               1 Parcela: {formatCurrency(installmentAmount)}
             </button>
-            {remainingAmount >= installmentAmount * 2 && (
-              <button 
-                onClick={() => { setPixAmount((installmentAmount * 2).toFixed(2)); setPixCode(""); }}
-                className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === parseFloat((installmentAmount * 2).toFixed(2)) && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                2 Parcelas: {formatCurrency(installmentAmount * 2)}
-              </button>
-            )}
-            {remainingAmount >= installmentAmount * 3 && (
-              <button 
-                onClick={() => { setPixAmount((installmentAmount * 3).toFixed(2)); setPixCode(""); }}
-                className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === parseFloat((installmentAmount * 3).toFixed(2)) && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                3 Parcelas: {formatCurrency(installmentAmount * 3)}
-              </button>
-            )}
             <button 
               onClick={() => { setPixAmount(remainingAmount.toFixed(2)); setPixCode(""); }}
               className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-bold flex items-center transition-colors ${Number(pixAmount) === remainingAmount && Number(pixAmount) > 0 ? 'bg-sky-500/20 border-sky-500/30 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'}`}

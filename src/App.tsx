@@ -60,6 +60,14 @@ export default function App() {
   const [isMockPayment, setIsMockPayment] = useState(true);
   const [paymentId, setPaymentId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!pixAmount || Number(pixAmount) <= 0) {
+      setPixCode("");
+      setQrCodeBase64("");
+      setIsGeneratingPix(false);
+    }
+  }, [pixAmount]);
+
   const showToast = (text: string, type: 'success' | 'error' = 'error') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 3000);
