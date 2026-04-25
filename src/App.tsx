@@ -266,7 +266,7 @@ export default function App() {
         itemName,
         totalValue: Number(totalValue),
         months: Number(months),
-        durationUnit,
+        durationUnit: category === 'loan' ? durationUnit : 'months',
         contributionP1: goalType === "individual" ? 100 : Number(contributionP1),
         nameP1,
         nameP2,
@@ -551,9 +551,10 @@ export default function App() {
     const total = isLoan ? baseTotal * (1 + (Number(interestRate) || 0) / 100) : baseTotal;
     
     const timeValue = Number(months) || 1;
+    const actualDurationUnit = isLoan ? durationUnit : 'months';
     let totalMonths = timeValue;
-    if (durationUnit === 'days') totalMonths = timeValue / 30.4166;
-    if (durationUnit === 'weeks') totalMonths = timeValue / 4.3333;
+    if (actualDurationUnit === 'days') totalMonths = timeValue / 30.4166;
+    if (actualDurationUnit === 'weeks') totalMonths = timeValue / 4.3333;
 
     const sP1 = Number(savedP1) || 0;
     const sP2 = Number(savedP2) || 0;
@@ -593,14 +594,14 @@ export default function App() {
       return Math.max(1, Math.round(totalDays / 30.4166));
     };
 
-    const baseInstallmentP1 = getInstallment(totalP1, timeValue, durationUnit, frequencyP1);
-    const baseInstallmentP2 = getInstallment(totalP2, timeValue, durationUnit, frequencyP2);
+    const baseInstallmentP1 = getInstallment(totalP1, timeValue, actualDurationUnit, frequencyP1);
+    const baseInstallmentP2 = getInstallment(totalP2, timeValue, actualDurationUnit, frequencyP2);
 
-    const installmentP1 = category === 'loan' ? baseInstallmentP1 : getInstallment(remainingP1, timeValue, durationUnit, frequencyP1);
-    const installmentP2 = category === 'loan' ? baseInstallmentP2 : getInstallment(remainingP2, timeValue, durationUnit, frequencyP2);
+    const installmentP1 = category === 'loan' ? baseInstallmentP1 : getInstallment(remainingP1, timeValue, actualDurationUnit, frequencyP1);
+    const installmentP2 = category === 'loan' ? baseInstallmentP2 : getInstallment(remainingP2, timeValue, actualDurationUnit, frequencyP2);
 
-    const totalPeriodsP1 = getPeriodsCount(timeValue, durationUnit, frequencyP1);
-    const totalPeriodsP2 = getPeriodsCount(timeValue, durationUnit, frequencyP2);
+    const totalPeriodsP1 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP1);
+    const totalPeriodsP2 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP2);
 
     const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor(sP1 / baseInstallmentP1) : 0;
     const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor(sP2 / baseInstallmentP2) : 0;
@@ -622,14 +623,14 @@ export default function App() {
     let currentSaved = saved;
     // We project up to total time points based on duration unit
     for (let i = 0; i <= timeValue; i++) {
-        const unitLabel = durationUnit === 'days' ? 'Dia' : durationUnit === 'weeks' ? 'Sem' : 'Mês';
+        const unitLabel = actualDurationUnit === 'days' ? 'Dia' : actualDurationUnit === 'weeks' ? 'Sem' : 'Mês';
       chartData.push({
         month: i === 0 ? 'Hoje' : `${unitLabel} ${i}`,
         acumulado: currentSaved,
         meta: total
       });
-      if (durationUnit === 'days') currentSaved += dailyTotal;
-      else if (durationUnit === 'weeks') currentSaved += weeklyTotal;
+      if (actualDurationUnit === 'days') currentSaved += dailyTotal;
+      else if (actualDurationUnit === 'weeks') currentSaved += weeklyTotal;
       else currentSaved += monthlyTotal;
     }
 
@@ -777,7 +778,7 @@ export default function App() {
         text = `
 🎯 ${goalType === 'individual' ? 'Minha Meta' : 'Nossa Meta'}: ${itemName || 'Sem nome'}
 💰 Valor Total: ${formatCurrency(results.total)}
-⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+⏳ Prazo: ${months} meses
 ✅ Já ${goalType === 'individual' ? 'guardei' : 'guardamos'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
 📉 Falta: ${formatCurrency(results.remaining)}
 `;

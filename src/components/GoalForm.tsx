@@ -312,7 +312,7 @@ export function GoalForm({
 
             <div className="space-y-3">
               <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">
-                Prazo — {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'} *
+                Prazo — {months} {category === 'loan' ? (durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses') : 'meses'} *
               </Label>
               <div className="flex items-center gap-3">
                 <div className={`flex flex-1 bg-white/5 border rounded-xl overflow-hidden shadow-sm h-12 ${errors.months ? 'border-red-400/50' : 'border-white/10'}`}>
@@ -325,15 +325,22 @@ export function GoalForm({
                     }}
                     className="w-full flex-1 border-0 bg-transparent text-center font-bold text-white focus-visible:ring-0 h-full"
                   />
-                  <select
-                    value={durationUnit}
-                    onChange={(e) => setDurationUnit(e.target.value as any)}
-                    className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
-                  >
-                    <option value="days" className="bg-slate-900">dias</option>
-                    <option value="weeks" className="bg-slate-900">semanas</option>
-                    <option value="months" className="bg-slate-900">meses</option>
-                  </select>
+                  {category === 'loan' && (
+                    <select
+                      value={durationUnit}
+                      onChange={(e) => setDurationUnit(e.target.value as any)}
+                      className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
+                    >
+                      <option value="days" className="bg-slate-900">dias</option>
+                      <option value="weeks" className="bg-slate-900">semanas</option>
+                      <option value="months" className="bg-slate-900">meses</option>
+                    </select>
+                  )}
+                  {category !== 'loan' && (
+                    <div className="flex items-center px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 h-full">
+                      meses
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1">
                   {commonMonths.map(m => (
