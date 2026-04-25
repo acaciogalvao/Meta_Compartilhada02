@@ -263,18 +263,7 @@ export function GoalForm({
               {errors.itemName && <p className="text-xs text-red-400 font-medium mt-1">{errors.itemName}</p>}
             </div>
 
-            <div className="space-y-2 mb-4">
-              <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">{category === 'loan' ? 'Categoria do Empréstimo' : 'Categoria da Meta'}</Label>
-              <select 
-                value={category} 
-                onChange={e => setCategory(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-12 px-3 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500/50 appearance-none"
-              >
-                <option value="saving" className="bg-slate-900">Economia / Compra / Viagem</option>
-                <option value="loan" className="bg-slate-900">Empréstimo</option>
-                <option value="other" className="bg-slate-900">Outro</option>
-              </select>
-            </div>
+
 
             <div className={category === 'loan' ? "grid grid-cols-[1fr_120px] sm:grid-cols-[1fr_150px] gap-3" : "space-y-2"}>
               <div className="space-y-2">
@@ -438,22 +427,26 @@ export function GoalForm({
                     {errors.pixKeyP1 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP1}</p>}
                   </div>
                   <div className="space-y-1.5 pt-2">
-                    <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
-                    <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
-                      {['daily', 'weekly', 'monthly'].map(freq => (
-                        <button
-                          key={freq}
-                          onClick={() => setFrequencyP1(freq)}
-                          className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP1 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                        >
-                          {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
-                        </button>
-                      ))}
-                    </div>
+                    {category !== 'loan' && (
+                      <>
+                        <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                        <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                          {['daily', 'weekly', 'monthly'].map(freq => (
+                            <button
+                              key={freq}
+                              onClick={() => setFrequencyP1(freq)}
+                              className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP1 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                            >
+                              {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                     
-                    {frequencyP1 === 'weekly' && (
+                    {((category !== 'loan' && frequencyP1 === 'weekly') || (category === 'loan' && durationUnit === 'weeks')) && (
                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                        <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia da semana o pagamento vence?</Label>
                         <select 
                           value={dueDayP1} 
                           onChange={e => setDueDayP1(Number(e.target.value))}
@@ -470,9 +463,9 @@ export function GoalForm({
                       </div>
                     )}
 
-                    {frequencyP1 === 'monthly' && (
+                    {((category !== 'loan' && frequencyP1 === 'monthly') || (category === 'loan' && durationUnit === 'months')) && (
                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                        <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia do mês o pagamento vence?</Label>
                         <select 
                           value={dueDayP1} 
                           onChange={e => setDueDayP1(Number(e.target.value))}
@@ -530,22 +523,26 @@ export function GoalForm({
                       {errors.pixKeyP2 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP2}</p>}
                     </div>
                     <div className="space-y-1.5 pt-2">
-                      <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
-                      <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
-                        {['daily', 'weekly', 'monthly'].map(freq => (
-                          <button
-                            key={freq}
-                            onClick={() => setFrequencyP2(freq)}
-                            className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP2 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                          >
-                            {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
-                          </button>
-                        ))}
-                      </div>
+                      {category !== 'loan' && (
+                        <>
+                          <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                          <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                            {['daily', 'weekly', 'monthly'].map(freq => (
+                              <button
+                                key={freq}
+                                onClick={() => setFrequencyP2(freq)}
+                                className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP2 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                              >
+                                {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
                       
-                      {frequencyP2 === 'weekly' && (
+                      {((category !== 'loan' && frequencyP2 === 'weekly') || (category === 'loan' && durationUnit === 'weeks')) && (
                         <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                          <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
+                          <Label className="text-slate-400 font-bold text-xs">Qual dia da semana o pagamento vence?</Label>
                           <select 
                             value={dueDayP2} 
                             onChange={e => setDueDayP2(Number(e.target.value))}
@@ -562,9 +559,9 @@ export function GoalForm({
                         </div>
                       )}
 
-                      {frequencyP2 === 'monthly' && (
+                      {((category !== 'loan' && frequencyP2 === 'monthly') || (category === 'loan' && durationUnit === 'months')) && (
                         <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                          <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
+                          <Label className="text-slate-400 font-bold text-xs">Qual dia do mês o pagamento vence?</Label>
                           <select 
                             value={dueDayP2} 
                             onChange={e => setDueDayP2(Number(e.target.value))}
