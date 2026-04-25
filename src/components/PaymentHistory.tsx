@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, ArrowDownToLine, Receipt, Clock, CheckCircle2, ChevronDown, ChevronUp, Calendar, X } from "lucide-react";
+import { Trash2, ArrowDownToLine, Receipt, Clock, CheckCircle2, ChevronDown, ChevronUp, Calendar, X, Share2 } from "lucide-react";
 import { useState, useMemo } from "react";
 
 interface PaymentHistoryProps {
@@ -10,6 +10,10 @@ interface PaymentHistoryProps {
   formatCurrency: (value: number) => string;
   progressPercent: number;
   handleClearHistory: () => void;
+  installmentP1?: number;
+  installmentP2?: number;
+  totalPeriodsP1?: number;
+  totalPeriodsP2?: number;
 }
 
 export function PaymentHistory({
@@ -18,7 +22,11 @@ export function PaymentHistory({
   nameP2,
   formatCurrency,
   progressPercent,
-  handleClearHistory
+  handleClearHistory,
+  installmentP1 = 0,
+  installmentP2 = 0,
+  totalPeriodsP1 = 0,
+  totalPeriodsP2 = 0
 }: PaymentHistoryProps) {
   const [visibleCount, setVisibleCount] = useState(5);
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
@@ -40,9 +48,56 @@ export function PaymentHistory({
     };
   }, [paymentsHistory]);
 
+  const paymentsWithLabels = useMemo(() => {
+    // Sort oldest to newest first
+    const sorted = [...paymentsHistory].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let cumulativeP1 = 0;
+    let cumulativeP2 = 0;
+
+    return sorted.map(payment => {
+      let label = "";
+      const isP1 = payment.payerId === 'P1';
+      const installmentAmount = isP1 ? installmentP1 : installmentP2;
+      const totalPeriods = isP1 ? totalPeriodsP1 : totalPeriodsP2;
+      
+      if (installmentAmount > 0) {
+        let startPeriod = 1;
+        let endPeriod = 1;
+        
+        if (isP1) {
+          startPeriod = Math.floor(cumulativeP1 / installmentAmount) + 1;
+          cumulativeP1 += payment.amount;
+          endPeriod = Math.floor(cumulativeP1 / installmentAmount);
+        } else {
+          startPeriod = Math.floor(cumulativeP2 / installmentAmount) + 1;
+          cumulativeP2 += payment.amount;
+          endPeriod = Math.floor(cumulativeP2 / installmentAmount);
+        }
+        
+        if (startPeriod > totalPeriods) startPeriod = totalPeriods;
+        if (endPeriod > totalPeriods) endPeriod = totalPeriods;
+        if (endPeriod < startPeriod) endPeriod = startPeriod;
+        
+        const totalPeriodsStr = String(totalPeriods).padStart(2, '0');
+        
+        if (startPeriod === endPeriod) {
+          label = `${startPeriod.toString().padStart(2, '0')}/${totalPeriodsStr}`;
+        } else {
+          const arr = [];
+          for (let i = startPeriod; i <= endPeriod; i++) {
+             arr.push(i.toString().padStart(2, '0'));
+          }
+          label = `${arr.join('-')}/${totalPeriodsStr}`;
+        }
+      }
+      
+      return { ...payment, installmentLabel: label };
+    });
+  }, [paymentsHistory, installmentP1, installmentP2, totalPeriodsP1, totalPeriodsP2]);
+
   // Filter and sort payments
   const filteredPayments = useMemo(() => {
-    return paymentsHistory.filter(payment => {
+    return paymentsWithLabels.filter(payment => {
       const d = new Date(payment.date);
       const paymentMonth = (d.getMonth() + 1).toString();
       const paymentYear = d.getFullYear().toString();
@@ -52,12 +107,34 @@ export function PaymentHistory({
       
       return monthMatch && yearMatch;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [paymentsHistory, selectedMonth, selectedYear]);
+  }, [paymentsWithLabels, selectedMonth, selectedYear]);
 
   const displayedPayments = filteredPayments.slice(0, visibleCount);
   const hasMore = visibleCount < filteredPayments.length;
 
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+  const sendReceiptOnWhatsApp = (payment: any) => {
+      const isP1 = payment.payerId === 'P1';
+      const payerName = isP1 ? nameP1 : nameP2;
+      const dateStr = new Date(payment.date).toLocaleDateString('pt-BR');
+      const timeStr = new Date(payment.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'});
+      
+      let text = `🧾 *COMPROVANTE DE PAGAMENTO*\n\n`;
+      text += `*Titular:* ${payerName}\n`;
+      text += `*Data:* ${dateStr} às ${timeStr}\n`;
+      text += `*Valor Pago:* ${formatCurrency(payment.amount)}\n`;
+      
+      if (payment.installmentLabel) {
+          text += `*Parcelas Pagas:* ${payment.installmentLabel}\n`;
+      }
+      
+      text += `\n*Código da Transação:*\n${payment.paymentId}\n\n`;
+      text += `✅ *Pagamento Confirmado*`;
+      
+      const encodedText = encodeURIComponent(text);
+      window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+  };
 
   return (
     <>
@@ -149,12 +226,17 @@ export function PaymentHistory({
                         <div className={`absolute top-0 left-0 w-1 h-full ${isP1 ? 'bg-emerald-400' : 'bg-purple-400'}`} />
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 ml-2">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-semibold text-white">{payerName}</span>
                               <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 font-bold flex items-center gap-1 border border-sky-500/20">
                                 <CheckCircle2 className="w-3 h-3" />
                                 {isManual ? "Concluído" : "Pix"}
                               </span>
+                              {payment.installmentLabel && (
+                                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold flex items-center border border-emerald-500/20">
+                                  {payment.installmentLabel}
+                               </span>
+                              )}
                             </div>
                             <div className="text-xs text-slate-400 flex items-center gap-1 flex-wrap">
                               <span className="capitalize">
@@ -247,9 +329,27 @@ export function PaymentHistory({
                       <CheckCircle2 className="w-4 h-4" /> {(selectedPayment.paymentId?.startsWith('mock_') || selectedPayment.paymentId?.startsWith('manual_')) ? 'Concluído' : 'Pix Confirmado'}
                     </span>
                   </div>
+                  {selectedPayment.installmentLabel && (
+                    <div className="flex justify-between items-center py-2 border-b border-white/5">
+                      <span className="text-slate-400 text-sm">Parcela</span>
+                      <span className="text-emerald-400 font-medium text-sm">
+                        {selectedPayment.installmentLabel}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center py-2">
                     <span className="text-slate-400 text-sm">ID da Transação</span>
                     <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId}>{selectedPayment.paymentId}</span>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <Button 
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors"
+                      onClick={() => sendReceiptOnWhatsApp(selectedPayment)}
+                    >
+                      <Share2 className="w-5 h-5 mr-2" />
+                      Compartilhar no WhatsApp
+                    </Button>
                   </div>
                 </div>
              </div>

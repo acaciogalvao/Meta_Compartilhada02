@@ -1005,6 +1005,10 @@ Bora conquistar! 💪`;
               formatCurrency={formatCurrency}
               progressPercent={results.progressPercent}
               handleClearHistory={handleClearHistoryClick}
+              installmentP1={results.installmentP1}
+              installmentP2={results.installmentP2}
+              totalPeriodsP1={results.totalPeriodsP1}
+              totalPeriodsP2={results.totalPeriodsP2}
             />
           </div>
         )}
