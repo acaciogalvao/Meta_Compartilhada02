@@ -427,6 +427,7 @@ export function GoalForm({
                             setPixKeyP1(formatPixKeyInput(e.target.value, pixTypeP1));
                             if (errors.pixKeyP1) setErrors({ ...errors, pixKeyP1: "" });
                           }} 
+                          inputMode={pixTypeP1 === 'celular' ? 'tel' : pixTypeP1 === 'cpf_cnpj' ? 'numeric' : pixTypeP1 === 'email' ? 'email' : 'text'}
                           className={`rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 flex-1 ${errors.pixKeyP1 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
                           placeholder={pixTypeP1 === 'celular' ? '(99) 99999-9999' : pixTypeP1 === 'cpf_cnpj' ? '000.000.000-00' : pixTypeP1 === 'email' ? 'email@exemplo.com' : 'Aleatória'}
                         />
@@ -523,6 +524,7 @@ export function GoalForm({
                         </select>
                         <Input value={pixKeyP2} 
                           onChange={e => { setPixKeyP2(formatPixKeyInput(e.target.value, pixTypeP2)); if (errors.pixKeyP2) setErrors({ ...errors, pixKeyP2: "" }); }} 
+                          inputMode={pixTypeP2 === 'celular' ? 'tel' : pixTypeP2 === 'cpf_cnpj' ? 'numeric' : pixTypeP2 === 'email' ? 'email' : 'text'}
                           className={`flex-1 rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 ${errors.pixKeyP2 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
                           placeholder={pixTypeP2 === "celular" ? "(99) 99999-9999" : pixTypeP2 === "cpf_cnpj" ? "000.000.000-00" : pixTypeP2 === "email" ? "email@exemplo.com" : "Aleatória"}
                         />
@@ -640,6 +642,7 @@ export function GoalForm({
                            setPixKeyP1(formatPixKeyInput(e.target.value, pixTypeP1));
                            if (errors.pixKeyP1) setErrors({ ...errors, pixKeyP1: "" });
                          }} 
+                         inputMode={pixTypeP1 === 'celular' ? 'tel' : pixTypeP1 === 'cpf_cnpj' ? 'numeric' : pixTypeP1 === 'email' ? 'email' : 'text'}
                          className={`rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 flex-1 ${errors.pixKeyP1 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
                          placeholder={pixTypeP1 === 'celular' ? '(99) 99999-9999' : pixTypeP1 === 'cpf_cnpj' ? '000.000.000-00' : pixTypeP1 === 'email' ? 'email@exemplo.com' : 'Aleatória'}
                        />
@@ -737,6 +740,7 @@ export function GoalForm({
   </select>
   <Input value={pixKeyP2} 
                        onChange={e => { setPixKeyP2(formatPixKeyInput(e.target.value, pixTypeP2)); if (errors.pixKeyP2) setErrors({ ...errors, pixKeyP2: "" }); }} 
+                       inputMode={pixTypeP2 === 'celular' ? 'tel' : pixTypeP2 === 'cpf_cnpj' ? 'numeric' : pixTypeP2 === 'email' ? 'email' : 'text'}
                        className={`flex-1 rounded-xl border-white/10 bg-white/5 text-white h-11 focus-visible:ring-sky-500/50 ${errors.pixKeyP2 ? 'border-red-400/50 focus-visible:ring-red-500/50' : 'border-white/10'}`} 
                        placeholder={pixTypeP2 === "celular" ? "(99) 99999-9999" : pixTypeP2 === "cpf_cnpj" ? "000.000.000-00" : pixTypeP2 === "email" ? "email@exemplo.com" : "Aleatória"}
                      />
