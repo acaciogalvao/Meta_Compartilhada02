@@ -25,6 +25,14 @@ The single `npm run dev` command starts both the Express API and the Vite dev se
 - `MERCADOPAGO_ACCESS_TOKEN` — Mercado Pago token (defaults to `test_dummy` for mock mode)
 - `GEMINI_API_KEY` — Google Gemini API key
 
+## GitHub Auto-Sync
+Every `git commit` automatically pushes to [acaciogalvao/Meta_Compartilhada02](https://github.com/acaciogalvao/Meta_Compartilhada02) via a post-commit git hook.
+
+- **Hook:** `.git/hooks/post-commit` — runs `git push --force origin <branch>` after each commit
+- **Credential helper:** `github-credential-helper.sh` — reads `GITHUB_PAT` secret at push time
+- **Setup script:** `github-sync-setup.sh` — re-run to reinstall the hook if needed
+- **Required secret:** `GITHUB_PAT` (already configured in Replit Secrets)
+
 ## Configuration Notes
 - Server port: **5000** (changed from original 3000)
 - Vite dev server: `host: 0.0.0.0`, `allowedHosts: true` for Replit proxy compatibility
