@@ -26,12 +26,13 @@ The single `npm run dev` command starts both the Express API and the Vite dev se
 - `GEMINI_API_KEY` — Google Gemini API key
 
 ## GitHub Auto-Sync
-File changes are automatically committed and pushed to [acaciogalvao/Meta_Compartilhada02](https://github.com/acaciogalvao/Meta_Compartilhada02) every 30 seconds via the **GitHub Sync** background workflow.
+File changes are automatically committed and pushed to [acaciogalvao/Meta_Compartilhada02](https://github.com/acaciogalvao/Meta_Compartilhada02) approximately every 30 seconds via the **GitHub Sync** background workflow.
 
-- **Sync script:** `github-autosync.sh` — polls for changes, auto-commits with a timestamp, pulls (rebase) then pushes
-- **Credential helper:** `github-credential-helper.sh` — reads `GITHUB_PAT` secret at push time (never stored in code)
-- **Workflow:** "GitHub Sync" (defined in `.replit`, auto-starts with the project)
+- **Sync script:** `github-autosync.sh` — polls every ~30s for any change (edits, new files, deletes), auto-commits with a timestamp, does `git pull --rebase` then `git push` (no force)
+- **Credential helper:** `github-credential-helper.sh` — GIT_ASKPASS script that reads `GITHUB_PAT` at push time; credentials are never stored in code
+- **Workflow:** "GitHub Sync" (registered in `.replit` as part of the parallel Project workflow; auto-starts with the project)
 - **Required secret:** `GITHUB_PAT` (configured in Replit Secrets)
+- **Note:** Sync is interval-based (~30s delay), not instantaneous per keystroke. The "Project" workflow must be running for sync to be active. Branch and interval are configurable via `GITHUB_SYNC_BRANCH` and `GITHUB_SYNC_INTERVAL` env vars.
 
 ## Configuration Notes
 - Server port: **5000** (changed from original 3000)
