@@ -63,15 +63,16 @@ export function PaymentHistory({
       if (installmentAmount > 0) {
         let startPeriod = 1;
         let endPeriod = 1;
+        const eps = installmentAmount * 1e-9;
         
         if (isP1) {
-          startPeriod = Math.floor(cumulativeP1 / installmentAmount) + 1;
+          startPeriod = Math.floor((cumulativeP1 + eps) / installmentAmount) + 1;
           cumulativeP1 += payment.amount;
-          endPeriod = Math.floor(cumulativeP1 / installmentAmount);
+          endPeriod = Math.floor((cumulativeP1 + eps) / installmentAmount);
         } else {
-          startPeriod = Math.floor(cumulativeP2 / installmentAmount) + 1;
+          startPeriod = Math.floor((cumulativeP2 + eps) / installmentAmount) + 1;
           cumulativeP2 += payment.amount;
-          endPeriod = Math.floor(cumulativeP2 / installmentAmount);
+          endPeriod = Math.floor((cumulativeP2 + eps) / installmentAmount);
         }
         
         if (startPeriod > totalPeriods) startPeriod = totalPeriods;
