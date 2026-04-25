@@ -6,4 +6,3 @@ coverage/
 *.log
 .env*
 !.env.example
-# GitHub auto-sync is configured via post-commit hook
