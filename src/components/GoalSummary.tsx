@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, MessageCircle, Copy, CheckCircle2, Clock, Share2, Edit2, Trash2, PlusCircle } from "lucide-react";
+import { TrendingUp, MessageCircle, Copy, CheckCircle2, Clock, Share2, Edit2, Trash2, PlusCircle, Bell } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useState } from 'react';
 
@@ -33,6 +33,9 @@ interface GoalSummaryProps {
   getFreqLabel: (freq: string) => string;
   handleExportText: () => void;
   showToast: (text: string, type?: 'success' | 'error') => void;
+  remindersEnabled?: boolean;
+  setRemindersEnabled?: (val: boolean) => void;
+  handleSaveGoals?: () => Promise<void>;
 }
 
 export function GoalSummary({
@@ -61,7 +64,10 @@ export function GoalSummary({
   formatCurrency,
   getFreqLabel,
   handleExportText,
-  showToast
+  showToast,
+  remindersEnabled,
+  setRemindersEnabled,
+  handleSaveGoals
 }: GoalSummaryProps) {
   const [chargeModalState, setChargeModalState] = useState<{
     isOpen: boolean;
@@ -225,6 +231,24 @@ export function GoalSummary({
                      <span className="text-xs font-medium">Restante</span>
                   </div>
                   <span className="font-bold text-pink-400 text-lg">{formatCurrency(results.total - results.saved)}</span>
+               </div>
+               <div className="glass-card-subtle p-4 col-span-2 md:col-span-1 flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-1">
+                     <div className="flex items-center gap-2 text-slate-400">
+                       <Bell className="w-4 h-4"/>
+                       <span className="text-xs font-medium">Lembretes</span>
+                     </div>
+                     <button 
+                        onClick={() => {
+                          if (setRemindersEnabled) setRemindersEnabled(!remindersEnabled);
+                          if (handleSaveGoals) setTimeout(() => handleSaveGoals(), 100);
+                        }}
+                        className={`w-10 h-5 rounded-full relative transition-colors focus:outline-none ${remindersEnabled ? 'bg-sky-500' : 'bg-slate-600'}`}
+                     >
+                       <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${remindersEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                     </button>
+                  </div>
+                  <span className="text-xs text-slate-500">{remindersEnabled ? 'Ativados (WhatsApp/Email)' : 'Desativados'}</span>
                </div>
           </div>
 

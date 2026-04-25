@@ -44,6 +44,7 @@ export default function App() {
   const [dueDayP1, setDueDayP1] = useState(5);
   const [dueDayP2, setDueDayP2] = useState(5);
   const [startDate, setStartDate] = useState(new Date().toISOString());
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
 
   // Pix Modal State
   const [showPixModal, setShowPixModal] = useState(false);
@@ -121,6 +122,7 @@ export default function App() {
       if (data.dueDayP1 !== undefined) setDueDayP1(data.dueDayP1);
       if (data.dueDayP2 !== undefined) setDueDayP2(data.dueDayP2);
       if (data.startDate !== undefined) setStartDate(data.startDate);
+      if (data.remindersEnabled !== undefined) setRemindersEnabled(data.remindersEnabled);
     }
     
     // Check if goal was just completed
@@ -276,6 +278,7 @@ export default function App() {
         months: Number(months),
         durationUnit: category === 'loan' ? durationUnit : 'months',
         contributionP1: goalType === "individual" ? 100 : Number(contributionP1),
+        remindersEnabled,
         nameP1,
         nameP2,
         phoneP1,
@@ -992,6 +995,9 @@ Bora conquistar! 💪`;
                   getFreqLabel={getFreqLabel}
                   handleExportText={handleExportText}
                   showToast={showToast}
+                  remindersEnabled={remindersEnabled}
+                  setRemindersEnabled={setRemindersEnabled}
+                  handleSaveGoals={handleSaveGoals}
                 />
               </div>
             </div>

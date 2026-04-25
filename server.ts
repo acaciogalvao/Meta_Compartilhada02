@@ -52,6 +52,7 @@ const goalSchema = new mongoose.Schema({
   savedP1: { type: Number, default: 0 },
   savedP2: { type: Number, default: 0 },
   startDate: { type: Date, default: Date.now },
+  remindersEnabled: { type: Boolean, default: false },
   payments: [paymentSchema]
 });
 
