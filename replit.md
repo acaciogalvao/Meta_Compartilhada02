@@ -26,12 +26,12 @@ The single `npm run dev` command starts both the Express API and the Vite dev se
 - `GEMINI_API_KEY` — Google Gemini API key
 
 ## GitHub Auto-Sync
-Every `git commit` automatically pushes to [acaciogalvao/Meta_Compartilhada02](https://github.com/acaciogalvao/Meta_Compartilhada02) via a post-commit git hook.
+File changes are automatically committed and pushed to [acaciogalvao/Meta_Compartilhada02](https://github.com/acaciogalvao/Meta_Compartilhada02) every 30 seconds via the **GitHub Sync** background workflow.
 
-- **Hook:** `.git/hooks/post-commit` — runs `git push --force origin <branch>` after each commit
-- **Credential helper:** `github-credential-helper.sh` — reads `GITHUB_PAT` secret at push time
-- **Setup script:** `github-sync-setup.sh` — re-run to reinstall the hook if needed
-- **Required secret:** `GITHUB_PAT` (already configured in Replit Secrets)
+- **Sync script:** `github-autosync.sh` — polls for changes, auto-commits with a timestamp, pulls (rebase) then pushes
+- **Credential helper:** `github-credential-helper.sh` — reads `GITHUB_PAT` secret at push time (never stored in code)
+- **Workflow:** "GitHub Sync" (defined in `.replit`, auto-starts with the project)
+- **Required secret:** `GITHUB_PAT` (configured in Replit Secrets)
 
 ## Configuration Notes
 - Server port: **5000** (changed from original 3000)
