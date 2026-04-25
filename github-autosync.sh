@@ -31,9 +31,23 @@ git -C "$REPO_DIR" config --unset credential.helper 2>/dev/null || true
 log "GitHub auto-sync started (polling every ${INTERVAL}s, branch: ${BRANCH})."
 log "All changes (new files, edits, deletes) will be committed and pushed automatically."
 
+is_repo_busy() {
+  # Returns true if a rebase, merge, cherry-pick, or revert is in progress
+  for state_dir in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+    [ -e "$REPO_DIR/.git/$state_dir" ] && return 0
+  done
+  return 1
+}
+
 push_changes() {
   local timestamp
   timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+  # Skip if a merge/rebase is already in progress — avoid compounding conflicts
+  if is_repo_busy; then
+    log "SKIP: A merge or rebase is in progress. Resolve it manually, then sync will resume."
+    return 0
+  fi
 
   # Stage all changes: tracked modifications, new files, deletions
   git -C "$REPO_DIR" add -A
