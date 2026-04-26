@@ -8,6 +8,8 @@ import QRCode from "qrcode";
 import mongoose from "mongoose";
 
 dotenv.config();
+// Fallback para caso o .env não exista
+dotenv.config({ path: '.env.example' });
 
 // Initialize MongoDB
 mongoose.set("bufferCommands", false);
