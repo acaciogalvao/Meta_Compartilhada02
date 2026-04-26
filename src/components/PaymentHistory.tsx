@@ -133,7 +133,7 @@ export function PaymentHistory({
           text += `*Parcelas Pagas:* ${payment.installmentLabel}\n`;
       }
       
-      text += `\n*Código da Transação:*\n${payment.paymentId}\n\n`;
+      text += `\n*Código da Transação:*\n${payment.paymentId?.replace('mock_', 'pag_')?.replace('pag:', 'pag_')}\n\n`;
       text += `✅ *Pagamento Confirmado*\n\n`;
       text += `📝 _Segue acima o comprovante de pagamento_`;
       
@@ -220,7 +220,7 @@ export function PaymentHistory({
                   const isP1 = payment.payerId === 'P1';
                   const payerName = isP1 ? nameP1 : nameP2;
                   const paymentDate = new Date(payment.date);
-                  const isManual = payment.paymentId?.startsWith('mock_') || payment.paymentId?.startsWith('manual_') || payment.paymentId?.startsWith('pag:');
+                  const isManual = payment.paymentId?.startsWith('mock_') || payment.paymentId?.startsWith('manual_') || payment.paymentId?.startsWith('pag:') || payment.paymentId?.startsWith('pag_');
                   
                   return (
                     <div key={payment.paymentId || index} className="relative flex gap-4 cursor-pointer group" onClick={() => setSelectedPayment(payment)}>
@@ -338,7 +338,7 @@ export function PaymentHistory({
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-slate-400 text-sm">Status</span>
                     <span className="text-sky-400 font-medium text-sm flex items-center gap-1 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-full">
-                      <CheckCircle2 className="w-4 h-4" /> {(selectedPayment.paymentId?.startsWith('mock_') || selectedPayment.paymentId?.startsWith('manual_') || selectedPayment.paymentId?.startsWith('pag:')) ? 'Concluído' : 'Pix Confirmado'}
+                      <CheckCircle2 className="w-4 h-4" /> {(selectedPayment.paymentId?.startsWith('mock_') || selectedPayment.paymentId?.startsWith('manual_') || selectedPayment.paymentId?.startsWith('pag:') || selectedPayment.paymentId?.startsWith('pag_')) ? 'Concluído' : 'Pix Confirmado'}
                     </span>
                   </div>
                   {selectedPayment.installmentLabel && (
@@ -351,7 +351,7 @@ export function PaymentHistory({
                   )}
                   <div className="flex justify-between items-center py-2">
                     <span className="text-slate-400 text-sm">ID da Transação</span>
-                    <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId}>{selectedPayment.paymentId}</span>
+                    <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId?.replace('mock_', 'pag_')?.replace('pag:', 'pag_')}>{selectedPayment.paymentId?.replace('mock_', 'pag_')?.replace('pag:', 'pag_')}</span>
                   </div>
                   
                   <div className="pt-2">
