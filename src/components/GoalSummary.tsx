@@ -108,7 +108,7 @@ export function GoalSummary({
          return `${String(current).padStart(2, '0')}/${totalStr}`;
       };
 
-      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})`;
+      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})\n\n📝 _Segue acima o comprovante de pagamento!_`;
 
       const encodedText = encodeURIComponent(text);
       const cleanPhone = phone.replace(/\D/g, "");
@@ -135,7 +135,7 @@ export function GoalSummary({
       const adjective = isFeminine(name) ? 'atrasada' : 'atrasado';
       const entityLabel = category === 'loan' ? 'do empréstimo' : 'da meta';
       
-      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!`;
+      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!\n\n📝 _Segue acima o comprovante de pagamento_`;
 
       setChargeModalState({
         isOpen: true,

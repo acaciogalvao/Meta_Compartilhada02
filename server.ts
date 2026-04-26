@@ -77,7 +77,7 @@ async function getMpConfig(): Promise<{ client: MercadoPagoConfig | null, isMock
 
 async function startServer() {
   const app = express();
-  const PORT = 5000;
+  const PORT = 3000;
 
   app.use(cors());
   app.use(express.json());

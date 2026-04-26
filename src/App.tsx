@@ -596,12 +596,10 @@ export default function App() {
 
     const getPeriodsCount = (rawTime: number, unit: string, freq: string) => {
       if (rawTime <= 0) return 1;
-      if (unit === 'months' && freq === 'monthly') return Math.max(1, Math.round(rawTime));
-      if (unit === 'weeks' && freq === 'weekly') return Math.max(1, Math.round(rawTime));
-      if (unit === 'days' && freq === 'daily') return Math.max(1, Math.round(rawTime));
       let totalDays = rawTime;
       if (unit === 'weeks') totalDays = rawTime * 7;
       if (unit === 'months') totalDays = rawTime * 30.4166;
+      
       if (freq === 'daily') return Math.max(1, Math.round(totalDays));
       if (freq === 'weekly') return Math.max(1, Math.round(totalDays / 7));
       return Math.max(1, Math.round(totalDays / 30.4166));
@@ -616,8 +614,8 @@ export default function App() {
     const totalPeriodsP1 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP1);
     const totalPeriodsP2 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP2);
 
-    const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor((sP1 + baseInstallmentP1 * 1e-9) / baseInstallmentP1) : 0;
-    const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor((sP2 + baseInstallmentP2 * 1e-9) / baseInstallmentP2) : 0;
+    const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor(sP1 / baseInstallmentP1) : 0;
+    const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor(sP2 / baseInstallmentP2) : 0;
 
     const monthlyP1 = totalMonths > 0 ? remainingP1 / totalMonths : 0;
     const monthlyP2 = totalMonths > 0 ? remainingP2 / totalMonths : 0;
@@ -1010,6 +1008,8 @@ Bora conquistar! 💪`;
               paymentsHistory={paymentsHistory}
               nameP1={nameP1}
               nameP2={nameP2}
+              phoneP1={phoneP1}
+              phoneP2={phoneP2}
               formatCurrency={formatCurrency}
               progressPercent={results.progressPercent}
               handleClearHistory={handleClearHistoryClick}
