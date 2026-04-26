@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Trash2, ArrowDownToLine, Receipt, Clock, CheckCircle2, ChevronDown, ChevronUp, Calendar, X, Share2 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Trash2, ArrowDownToLine, Receipt, Clock, CheckCircle2, ChevronDown, ChevronUp, Calendar, X, Share2, FileText, Loader2 } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface PaymentHistoryProps {
   paymentsHistory: any[];
@@ -32,6 +34,8 @@ export function PaymentHistory({
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   // Generate available years and months from data
   const { availableYears, availableMonths } = useMemo(() => {
@@ -115,7 +119,40 @@ export function PaymentHistory({
 
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-  const sendReceiptOnWhatsApp = (payment: any) => {
+  const generatePDF = async (payment: any) => {
+    if (!receiptRef.current) return null;
+    
+    setIsGeneratingPdf(true);
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        backgroundColor: "#0f172a",
+        logging: false,
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      return pdf.output("blob");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      return null;
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const sendReceiptOnWhatsApp = async (payment: any) => {
       const isP1 = payment.payerId === 'P1';
       const payerName = isP1 ? nameP1 : nameP2;
       const dateStr = new Date(payment.date).toLocaleDateString('pt-BR');
@@ -131,9 +168,25 @@ export function PaymentHistory({
       }
       
       text += `\n*Código da Transação:*\n${payment.paymentId}\n\n`;
-      text += `✅ *Pagamento Confirmado*`;
+      text += `✅ *Pagamento Confirmado*\n\n`;
+      text += `_O PDF do comprovante foi gerado e pode ser baixado no app._`;
       
       const encodedText = encodeURIComponent(text);
+      
+      // Primeiro, tentamos gerar o PDF para download
+      const pdfBlob = await generatePDF(payment);
+      if (pdfBlob) {
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `comprovante-${payment.paymentId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      // Depois abre o WhatsApp
       window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
   };
 
@@ -239,10 +292,9 @@ export function PaymentHistory({
                                </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-400 flex items-center gap-1 flex-wrap">
-                              <span className="capitalize">
+                            <div className="text-xs text-slate-400 flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
                                 {paymentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })} às {paymentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})}
-                              </span>
                             </div>
                           </div>
                           
@@ -303,6 +355,56 @@ export function PaymentHistory({
                  <X className="w-5 h-5" />
                </button>
              </div>
+             
+             {/* Hidden Receipt for PDF Generation */}
+             <div className="fixed left-[-9999px] top-[-9999px]">
+                <div ref={receiptRef} className="w-[400px] p-8 bg-[#0f172a] text-white font-sans">
+                   <div className="flex flex-col items-center text-center space-y-4">
+                      <div className="bg-emerald-500/20 p-4 rounded-full">
+                         <Receipt className="w-12 h-12 text-emerald-400" />
+                      </div>
+                      <h1 className="text-2xl font-bold tracking-tight">Comprovante de Pagamento</h1>
+                      <div className="w-full h-px bg-white/10 my-4" />
+                      
+                      <div className="w-full space-y-4 text-left">
+                         <div className="flex justify-between">
+                            <span className="text-slate-400">Valor</span>
+                            <span className="text-2xl font-black text-emerald-400">{formatCurrency(selectedPayment.amount)}</span>
+                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-slate-400">Pagador</span>
+                            <span className="font-semibold">{selectedPayment.payerId === 'P1' ? nameP1 : nameP2}</span>
+                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-slate-400">Data</span>
+                            <span>{new Date(selectedPayment.date).toLocaleDateString('pt-BR')}</span>
+                         </div>
+                         <div className="flex justify-between">
+                            <span className="text-slate-400">Hora</span>
+                            <span>{new Date(selectedPayment.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit'})}</span>
+                         </div>
+                         {selectedPayment.installmentLabel && (
+                            <div className="flex justify-between">
+                               <span className="text-slate-400">Parcela</span>
+                               <span className="text-emerald-400 font-bold">{selectedPayment.installmentLabel}</span>
+                            </div>
+                         )}
+                         <div className="pt-4">
+                            <span className="text-slate-400 text-xs block mb-1">ID da Transação</span>
+                            <span className="font-mono text-[10px] text-slate-500 break-all bg-white/5 p-2 rounded block">{selectedPayment.paymentId}</span>
+                         </div>
+                      </div>
+                      
+                      <div className="w-full h-px bg-white/10 my-4" />
+                      <div className="flex items-center gap-2 text-sky-400 font-bold">
+                         <CheckCircle2 className="w-5 h-5" />
+                         <span>PAGAMENTO CONFIRMADO</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-8">Gerado por Meta Compartilhada</p>
+                   </div>
+                </div>
+             </div>
+
              <div className="p-5 space-y-4">
                 <div className="flex justify-center mb-6">
                    <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
@@ -343,13 +445,40 @@ export function PaymentHistory({
                     <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId}>{selectedPayment.paymentId}</span>
                   </div>
                   
-                  <div className="pt-2">
+                  <div className="pt-2 space-y-2">
                     <Button 
                       className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors"
                       onClick={() => sendReceiptOnWhatsApp(selectedPayment)}
+                      disabled={isGeneratingPdf}
                     >
-                      <Share2 className="w-5 h-5 mr-2" />
+                      {isGeneratingPdf ? (
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      ) : (
+                        <Share2 className="w-5 h-5 mr-2" />
+                      )}
                       Compartilhar no WhatsApp
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      className="w-full border-white/10 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors"
+                      onClick={async () => {
+                        const pdfBlob = await generatePDF(selectedPayment);
+                        if (pdfBlob) {
+                          const url = URL.createObjectURL(pdfBlob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `comprovante-${selectedPayment.paymentId}.pdf`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                      disabled={isGeneratingPdf}
+                    >
+                      <FileText className="w-5 h-5 mr-2" />
+                      Baixar Comprovante PDF
                     </Button>
                   </div>
                 </div>
