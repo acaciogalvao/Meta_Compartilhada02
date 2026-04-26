@@ -428,7 +428,7 @@ async function startServer() {
           isMock: false
         });
       } else {
-        const mockId = "pi_mock_" + Math.random().toString(36).substring(7);
+        const mockId = "pag:" + Math.random().toString(36).substring(7);
         res.json({
           paymentId: mockId,
           isMock: true,
@@ -488,7 +488,7 @@ async function startServer() {
   app.post("/api/mock-pay", async (req, res) => {
     const { amount, goalId, payerId } = req.body;
     try {
-      const mockPaymentId = "mock_" + Date.now();
+      const mockPaymentId = "pag:" + Date.now();
       const goal = await Goal.findById(goalId || "default_goal");
       if (goal) {
         goal.payments.push({
