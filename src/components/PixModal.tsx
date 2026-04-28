@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Copy, CheckCircle2, Zap, CheckSquare, QrCode } from "lucide-react";
+import { X, Copy, CheckCircle2, Zap, CheckSquare, QrCode, Banknote } from "lucide-react";
 
 interface PixModalProps {
   showPixModal: boolean;
@@ -27,6 +27,8 @@ interface PixModalProps {
   handleSimulatePayment: () => void;
   isMockPayment: boolean;
   setIsMockPayment: (isMock: boolean) => void;
+  paymentMethod: "pix" | "dinheiro";
+  setPaymentMethod: (method: "pix" | "dinheiro") => void;
   formatCurrency: (value: number) => string;
   handleCurrencyChange: (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => void;
 }
@@ -54,6 +56,8 @@ export function PixModal({
   handleSimulatePayment,
   isMockPayment,
   setIsMockPayment,
+  paymentMethod,
+  setPaymentMethod,
   formatCurrency,
   handleCurrencyChange
 }: PixModalProps) {
@@ -71,12 +75,14 @@ export function PixModal({
   // Auto-generate PIX if amount changes and it's valid
   useEffect(() => {
     if (showPixModal && pixAmount && Number(pixAmount) > 0 && !isGeneratingPix && !pixCode && !paymentSuccess) {
-      const timeoutId = setTimeout(() => {
-        handleGeneratePix();
-      }, 1000);
-      return () => clearTimeout(timeoutId);
+      if (paymentMethod === 'pix') {
+        const timeoutId = setTimeout(() => {
+          handleGeneratePix();
+        }, 1000);
+        return () => clearTimeout(timeoutId);
+      }
     }
-  }, [pixAmount, showPixModal]);
+  }, [pixAmount, showPixModal, paymentMethod]);
 
   if (!showPixModal) return null;
 
@@ -169,8 +175,23 @@ export function PixModal({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 border-t border-white/10 pt-6">
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setPaymentMethod('pix')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all duration-300 ${paymentMethod === 'pix' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/50 shadow-[0_0_15px_rgba(56,189,248,0.2)]' : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'}`}
+            >
+              <QrCode className="w-5 h-5" /> Pix
+            </button>
+            <button
+              onClick={() => setPaymentMethod('dinheiro')}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all duration-300 ${paymentMethod === 'dinheiro' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10'}`}
+            >
+              <Banknote className="w-5 h-5" /> Dinheiro
+            </button>
+          </div>
+
           <div className="text-center relative mb-4">
-             <span className="bg-slate-900 px-3 text-xs text-sky-400 font-bold uppercase tracking-widest relative z-10 border border-white/10 rounded-full py-1 shadow-sm">QR Code Pix</span>
+             <span className="bg-slate-900 px-3 text-xs text-slate-400 font-bold uppercase tracking-widest relative z-10 border border-white/10 rounded-full py-1 shadow-sm">Detalhes do Pagamento</span>
              <div className="absolute top-1/2 left-0 w-full h-px bg-white/10"></div>
           </div>
 
@@ -222,6 +243,22 @@ export function PixModal({
              <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <div className="w-8 h-8 border-4 border-white/10 border-t-sky-400 rounded-full animate-spin drop-shadow-[0_0_5px_rgba(56,189,248,0.5)]"></div>
                 <p className="text-slate-400 text-sm font-medium">Gerando QR Code...</p>
+             </div>
+          ) : paymentMethod === 'dinheiro' ? (
+             <div className="flex flex-col items-center justify-center py-6 text-center">
+               <Banknote className="w-16 h-16 text-emerald-500 mb-4 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-in zoom-in duration-500" />
+               <p className="text-slate-300 text-sm mb-6">Você está confirmando que o valor foi entregue em dinheiro para <span className="font-semibold text-white">{payerName}</span>.</p>
+               <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold px-6 py-2 rounded-full mb-8 text-lg shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                 {formatCurrency(Number(pixAmount) || 0)}
+               </div>
+               <Button 
+                 disabled={!pixAmount || Number(pixAmount) <= 0}
+                 className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-bold text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)] border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                 onClick={handleSimulatePayment}
+               >
+                 <CheckCircle2 className="w-6 h-6 mr-2" />
+                 Confirmar Pagamento
+               </Button>
              </div>
           ) : (
              <div className="flex flex-col items-center justify-center py-12 text-center h-48 border-2 border-dashed border-white/10 bg-white/5 rounded-2xl shadow-inner">

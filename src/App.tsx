@@ -60,6 +60,7 @@ export default function App() {
   const [qrCodeBase64, setQrCodeBase64] = useState("");
   const [isMockPayment, setIsMockPayment] = useState(true);
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro">("pix");
 
   useEffect(() => {
     if (!pixAmount || Number(pixAmount) <= 0) {
@@ -517,7 +518,7 @@ export default function App() {
       await fetch('/api/mock-pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, goalId: currentGoalId, payerId: currentPayer })
+        body: JSON.stringify({ amount, goalId: currentGoalId, payerId: currentPayer, method: paymentMethod })
       });
       setPaymentSuccess(true);
       
@@ -1075,6 +1076,8 @@ Bora conquistar! 💪`;
           handleSimulatePayment={handleSimulatePayment}
           isMockPayment={isMockPayment}
           setIsMockPayment={setIsMockPayment}
+          paymentMethod={paymentMethod}
+          setPaymentMethod={setPaymentMethod}
           formatCurrency={formatCurrency}
           handleCurrencyChange={handleCurrencyChange}
         />

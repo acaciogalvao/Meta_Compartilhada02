@@ -27,6 +27,7 @@ if (process.env.MONGODB_URI) {
 const paymentSchema = new mongoose.Schema({
   paymentId: String,
   amount: Number,
+  method: String,
   payerId: String,
   date: { type: Date, default: Date.now }
 });
@@ -488,14 +489,15 @@ async function startServer() {
   });
 
   app.post("/api/mock-pay", async (req, res) => {
-    const { amount, goalId, payerId } = req.body;
+    const { amount, goalId, payerId, method } = req.body;
     try {
-      const mockPaymentId = "pag_" + Date.now();
+      const mockPaymentId = method === 'dinheiro' ? "dinheiro_" + Date.now() : "pag_" + Date.now();
       const goal = await Goal.findById(goalId || "default_goal");
       if (goal) {
         goal.payments.push({
           paymentId: mockPaymentId,
           amount: amount,
+          method: method || 'pix',
           payerId: payerId || 'P1'
         });
         if (payerId === 'P2') {
@@ -510,6 +512,7 @@ async function startServer() {
           payments: [{
             paymentId: mockPaymentId,
             amount: amount,
+            method: method || 'pix',
             payerId: payerId || 'P1'
           }]
         } as any;
