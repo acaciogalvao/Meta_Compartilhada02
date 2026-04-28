@@ -384,7 +384,7 @@ export function GoalForm({
                 <div className="space-y-4">
                   {goalType === 'shared' && <h3 className="font-bold text-sky-400 text-sm">Dados do Titular 1</h3>}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-400 font-bold text-xs">Nome *</Label>
+                    <Label className="text-slate-400 font-bold text-xs">{category === 'loan' ? 'Nome (quem está pagando) *' : 'Nome *'}</Label>
                     <Input 
                       value={nameP1} 
                       onChange={e => {
@@ -406,7 +406,7 @@ export function GoalForm({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-slate-400 font-bold text-xs">Chave Pix</Label>
+                    <Label className="text-slate-400 font-bold text-xs">{category === 'loan' ? 'Chave Pix (quem vai receber)' : 'Chave Pix'}</Label>
                     <div className="flex gap-2">
                         <select
                           value={pixTypeP1}
@@ -492,7 +492,7 @@ export function GoalForm({
                   <div className="space-y-4 pt-4 border-t border-white/10">
                     <h3 className="font-bold text-sky-400 text-sm">Dados do Titular 2</h3>
                     <div className="space-y-1.5">
-                      <Label className="text-slate-400 font-bold text-xs">Nome *</Label>
+                      <Label className="text-slate-400 font-bold text-xs">{category === 'loan' ? 'Nome (quem está pagando) *' : 'Nome *'}</Label>
                       <Input 
                         value={nameP2} 
                         onChange={e => {
@@ -514,7 +514,7 @@ export function GoalForm({
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-slate-400 font-bold text-xs">Chave Pix</Label>
+                      <Label className="text-slate-400 font-bold text-xs">{category === 'loan' ? 'Chave Pix (quem vai receber)' : 'Chave Pix'}</Label>
                       <div className="flex gap-2">
                         <select value={pixTypeP2} onChange={e => { setPixTypeP2(e.target.value); setPixKeyP2(formatPixKeyInput(pixKeyP2, e.target.value)); }} className="rounded-xl border border-white/10 bg-white/5 text-white h-11 px-2 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none text-[11px] w-[95px] sm:w-[120px] shrink-0">
                           <option value="celular" className="text-slate-900">Celular</option>
