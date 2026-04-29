@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, MessageCircle, Copy, CheckCircle2, Clock, Share2, Edit2, Trash2, PlusCircle, Bell } from "lucide-react";
+import { TrendingUp, MessageCircle, Copy, CheckCircle2, Clock, Share2, Edit2, Trash2, PlusCircle, Bell, BellRing } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useState } from 'react';
 
@@ -86,9 +86,9 @@ export function GoalSummary({
                </div>
              </div>
              <div className="flex gap-1 shrink-0">
-               <button onClick={handleExportText} className="p-2 text-slate-400 hover:text-white transition-colors"><Share2 className="w-5 h-5"/></button>
-               <button onClick={() => setIsEditing(!isEditing)} className="p-2 text-slate-400 hover:text-white transition-colors"><Edit2 className="w-5 h-5"/></button>
-               <button onClick={handleDeleteGoal} className="p-2 text-slate-400 hover:text-white transition-colors"><Trash2 className="w-5 h-5"/></button>
+               <button onClick={handleExportText} title="Enviar Lembrete" className="p-2 text-sky-400 hover:text-sky-300 transition-colors"><BellRing className="w-5 h-5"/></button>
+               <button onClick={() => setIsEditing(!isEditing)} title="Editar" className="p-2 text-slate-400 hover:text-white transition-colors"><Edit2 className="w-5 h-5"/></button>
+               <button onClick={handleDeleteGoal} title="Excluir" className="p-2 text-slate-400 hover:text-rose-400 transition-colors"><Trash2 className="w-5 h-5"/></button>
              </div>
           </div>
 

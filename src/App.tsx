@@ -782,64 +782,69 @@ export default function App() {
 
     if (category === 'loan') {
         text = `
-🏦 Título do Empréstimo: ${itemName || 'Empréstimo'}
-💰 Valor Original (Sem Juros): ${formatCurrency(results.baseTotal)}
-💰 Valor Total (Com Juros): ${formatCurrency(results.total)}
-📈 Juros: ${interestRate}%
-⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+🔔 *LEMBRETE DE EMPRÉSTIMO*
+
+Passando para atualizar o status do empréstimo: *${itemName || 'Empréstimo'}*
+
+🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}
+💰 *Valor Total (Com Juros):* ${formatCurrency(results.total)}
+✅ *Já foi pago:* ${formatCurrency(results.saved)}
+📉 *Falta pagar:* ${formatCurrency(results.remaining)}
 `;
         if (goalType === "shared") {
             text += `
-👥 Resumo dos Pagamentos:
-👤 ${nameP1}:
-   - Valor já quitado: ${formatCurrency(results.sP1)}
+👥 *Resumo por Pessoa:*
+👤 *${nameP1}:*
+   - Já quitou: ${formatCurrency(results.sP1)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
-   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+   - Resta pagar: ${formatCurrency(results.remainingP1)}
 
-👤 ${nameP2}:
-   - Valor já quitado: ${formatCurrency(results.sP2)}
+👤 *${nameP2}:*
+   - Já quitou: ${formatCurrency(results.sP2)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
-   - Restante a quitar: ${formatCurrency(results.remainingP2)}
+   - Resta pagar: ${formatCurrency(results.remainingP2)}
+
+📆 _Por favor, não se esqueçam do pagamento da parcela atual!_
 `;
         } else {
             text += `
-👤 Quitação de ${nameP1}:
-   - Valor já quitado: ${formatCurrency(results.sP1)}
+👤 *Titular:* ${nameP1}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
-   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+   - Valor da Parcela: ${formatCurrency(results.installmentP1)} (${getFreqLabel(frequencyP1).toLowerCase()})
+   - Resta pagar: ${formatCurrency(results.remainingP1)}
+
+📆 _Por favor, lembre-se do pagamento da parcela atual!_
 `;
         }
     } else {
         text = `
-🎯 ${goalType === 'individual' ? 'Minha Meta' : 'Nossa Meta'}: ${itemName || 'Sem nome'}
-💰 Valor Total: ${formatCurrency(results.total)}
-⏳ Prazo: ${months} meses
-✅ Já ${goalType === 'individual' ? 'guardei' : 'guardamos'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
-📉 Falta: ${formatCurrency(results.remaining)}
+🎯 *LEMBRETE DA META*
+
+Passando para atualizar o progresso da ${goalType === 'individual' ? 'minha meta' : 'nossa meta'}: *${itemName || 'Sem nome'}*
+
+💰 *Objetivo de Valor:* ${formatCurrency(results.total)}
+✅ *Já Guardado:* ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
+📉 *Falta:* ${formatCurrency(results.remaining)}
 `;
 
         if (goalType === "shared") {
           text += `
-📊 Resumo Individual:
-👤 ${nameP1} (${contributionP1}%):
+📊 *Resumo Individual:*
+👤 *${nameP1} (${contributionP1}%):*
    - Já guardou: ${formatCurrency(results.sP1)}
-   - Falta guardar: ${formatCurrency(results.remainingP1)}
-   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Resta: ${formatCurrency(results.remainingP1)}
 
-👤 ${nameP2} (${contributionP2}%):
+👤 *${nameP2} (${contributionP2}%):*
    - Já guardou: ${formatCurrency(results.sP2)}
-   - Falta guardar: ${formatCurrency(results.remainingP2)}
-   - Guardar: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
+   - Guardar na vez: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
+   - Resta: ${formatCurrency(results.remainingP2)}
 
-💵 Total a guardar por mês: ${formatCurrency(results.monthlyTotal)}
-
-Bora conquistar juntos! ❤️`;
+Bora conquistar esse objetivo juntos! ❤️💪`;
         } else {
           text += `
-📊 Meu Resumo:
-   - Já guardei: ${formatCurrency(results.sP1)}
-   - Falta guardar: ${formatCurrency(results.remainingP1)}
-   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+👤 *Meu Resumo:*
+   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
 Bora conquistar! 💪`;
         }
