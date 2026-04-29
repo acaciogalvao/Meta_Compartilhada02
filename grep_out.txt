@@ -1,0 +1,81 @@
+769-    setMonths("12");
+770-    setContributionP1("50");
+771-    setSavedP1("");
+772-    setSavedP2("");
+773-  };
+774-
+775-  const handleExportText = () => {
+776-    let text = "";
+777-    const formatPaidSequence = (paid: number, total: number) => {
+778-       const current = Math.min(paid + 1, total);
+779-       const totalStr = String(total).padStart(2, '0');
+780-       return `${String(current).padStart(2, '0')}/${totalStr}`;
+781-    };
+782-
+783-    if (category === 'loan') {
+784-        text = `
+785-🏦 Título do Empréstimo: ${itemName || 'Empréstimo'}
+786-💰 Valor Original (Sem Juros): ${formatCurrency(results.baseTotal)}
+787-💰 Valor Total (Com Juros): ${formatCurrency(results.total)}
+788-📈 Juros: ${interestRate}%
+789-⏳ Prazo: ${months} ${durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+790-`;
+791-        if (goalType === "shared") {
+792-            text += `
+793-👥 Resumo dos Pagamentos:
+794-👤 ${nameP1}:
+795-   - Valor já quitado: ${formatCurrency(results.sP1)}
+796-   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+797-   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+798-
+799-👤 ${nameP2}:
+800-   - Valor já quitado: ${formatCurrency(results.sP2)}
+801-   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
+802-   - Restante a quitar: ${formatCurrency(results.remainingP2)}
+803-`;
+804-        } else {
+805-            text += `
+806-👤 Quitação de ${nameP1}:
+807-   - Valor já quitado: ${formatCurrency(results.sP1)}
+808-   - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
+809-   - Restante a quitar: ${formatCurrency(results.remainingP1)}
+810-`;
+811-        }
+812-    } else {
+813-        text = `
+814-🎯 ${goalType === 'individual' ? 'Minha Meta' : 'Nossa Meta'}: ${itemName || 'Sem nome'}
+815-💰 Valor Total: ${formatCurrency(results.total)}
+816-⏳ Prazo: ${months} meses
+817-✅ Já ${goalType === 'individual' ? 'guardei' : 'guardamos'}: ${formatCurrency(results.saved)} (${results.progressPercent.toFixed(1)}%)
+818-📉 Falta: ${formatCurrency(results.remaining)}
+819-`;
+820-
+821-        if (goalType === "shared") {
+822-          text += `
+823-📊 Resumo Individual:
+824-👤 ${nameP1} (${contributionP1}%):
+825-   - Já guardou: ${formatCurrency(results.sP1)}
+826-   - Falta guardar: ${formatCurrency(results.remainingP1)}
+827-   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+828-
+829-👤 ${nameP2} (${contributionP2}%):
+830-   - Já guardou: ${formatCurrency(results.sP2)}
+831-   - Falta guardar: ${formatCurrency(results.remainingP2)}
+832-   - Guardar: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
+833-
+834-💵 Total a guardar por mês: ${formatCurrency(results.monthlyTotal)}
+835-
+836-Bora conquistar juntos! ❤️`;
+837-        } else {
+838-          text += `
+839-📊 Meu Resumo:
+840-   - Já guardei: ${formatCurrency(results.sP1)}
+841-   - Falta guardar: ${formatCurrency(results.remainingP1)}
+842-   - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+843-
+844-Bora conquistar! 💪`;
+845-        }
+846-    }
+847-
+848-    const encodedText = encodeURIComponent(text.trim());
+849:    window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');

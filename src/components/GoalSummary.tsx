@@ -71,117 +71,6 @@ export function GoalSummary({
   handleSaveGoals,
   motivationalMessage
 }: GoalSummaryProps) {
-  const [chargeModalState, setChargeModalState] = useState<{
-    isOpen: boolean;
-    name: string;
-    phone: string;
-    amount: number;
-    pixCode: string;
-    text: string;
-  }>({
-    isOpen: false,
-    name: '',
-    phone: '',
-    amount: 0,
-    pixCode: '',
-    text: ''
-  });
-
-  const [copiedPix, setCopiedPix] = useState(false);
-  const [copiedText, setCopiedText] = useState(false);
-
-  const handleCharge = async (name: string, phone: string, amount: number) => {
-    if (!phone) {
-      showToast(`Cadastre o WhatsApp de ${name} na área de edição.`, "error");
-      return;
-    }
-
-    if (category === 'loan') {
-      const isP1 = name === nameP1;
-      const userSaved = isP1 ? results.sP1 : results.sP2;
-      const userRemaining = isP1 ? results.remainingP1 : results.remainingP2;
-      const userPaidPeriodsCount = isP1 ? results.paidPeriodsCountP1 : results.paidPeriodsCountP2;
-      const userTotalPeriods = isP1 ? results.totalPeriodsP1 : results.totalPeriodsP2;
-      const freqLabel = getFreqLabel(isP1 ? frequencyP1 : frequencyP2).toLowerCase();
-      
-      const formatPaidSequence = (paid: number, total: number) => {
-         const current = Math.min(paid + 1, total);
-         const totalStr = String(total).padStart(2, '0');
-         return `${String(current).padStart(2, '0')}/${totalStr}`;
-      };
-
-      const text = `💰 *LEMBRETE DE PAGAMENTO DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})\n\nPor favor, realize o pagamento da parcela atual. Obrigado!`;
-
-      const encodedText = encodeURIComponent(text);
-      const cleanPhone = phone.replace(/\D/g, "");
-      window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodedText}`, '_blank');
-      return;
-    }
-    
-    try {
-      showToast("Gerando código Pix...", "success");
-      const res = await fetch("/api/create-pix-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amount })
-      });
-      const data = await res.json();
-      const pixCode = data.pixCode;
-      
-      const isFeminine = (n: string) => {
-        const firstWord = n.trim().split(' ')[0].toLowerCase();
-        return firstWord.endsWith('a') || firstWord.endsWith('ely') || firstWord.endsWith('ele') || firstWord.endsWith('eli');
-      };
-      
-      const term = category === 'loan' ? 'o pagamento' : (isFeminine(name) ? 'sua parcela' : 'seu pagamento');
-      const adjective = isFeminine(name) ? 'atrasada' : 'atrasado';
-      const entityLabel = category === 'loan' ? 'do empréstimo' : 'da meta';
-      
-      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!`;
-
-      setChargeModalState({
-        isOpen: true,
-        name,
-        phone,
-        amount,
-        pixCode,
-        text
-      });
-      setCopiedPix(false);
-      setCopiedText(false);
-
-    } catch (err) {
-      console.error(err);
-      showToast("Erro ao gerar Pix para cobrança.", "error");
-    }
-  };
-
-  const copyToClipboard = (text: string, type: 'pix' | 'text') => {
-    navigator.clipboard.writeText(text).then(() => {
-      if (type === 'pix') {
-        setCopiedPix(true);
-        setTimeout(() => setCopiedPix(false), 2000);
-        showToast("Código Pix copiado!", "success");
-      } else {
-        setCopiedText(true);
-        setTimeout(() => setCopiedText(false), 2000);
-        showToast("Texto copiado!", "success");
-      }
-    });
-  };
-
-  const sendWhatsAppMsg = () => {
-    const encodedText = encodeURIComponent(chargeModalState.text);
-    const cleanPhone = chargeModalState.phone.replace(/\D/g, "");
-    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodedText}`, '_blank');
-  };
-
-  const sendWhatsAppPix = () => {
-    const encodedPix = encodeURIComponent(chargeModalState.pixCode);
-    const cleanPhone = chargeModalState.phone.replace(/\D/g, "");
-    window.open(`https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodedPix}`, '_blank');
-  };
-
   return (
     <div className="space-y-6">
       
@@ -304,9 +193,6 @@ export function GoalSummary({
                  <Button className="flex-1 bg-white text-slate-900 border-0 hover:bg-slate-100 rounded-xl shadow-lg shadow-white/10 h-14 font-bold text-sm transition-colors" onClick={() => { setCurrentPayer('P1'); setShowPixModal(true); }}>
                    NOVA CONTRIBUIÇÃO
                  </Button>
-                 <Button variant="outline" className="flex-none px-6 h-14 rounded-xl border-white/10 text-slate-300 bg-white/5 hover:bg-white/10 font-bold transition-colors" onClick={() => handleCharge(nameP1, phoneP1, results.installmentP1)}>
-                   <MessageCircle className="w-5 h-5"/>
-                 </Button>
               </div>
             </CardContent>
           </Card>
@@ -349,61 +235,11 @@ export function GoalSummary({
                    <Button className="flex-1 bg-white text-slate-900 border-0 hover:bg-slate-100 rounded-xl shadow-lg shadow-white/10 h-14 font-bold text-sm transition-colors" onClick={() => { setCurrentPayer('P2'); setShowPixModal(true); }}>
                      NOVA CONTRIBUIÇÃO
                    </Button>
-                   <Button variant="outline" className="flex-none px-6 h-14 rounded-xl border-white/10 text-slate-300 bg-white/5 hover:bg-white/10 font-bold transition-colors" onClick={() => handleCharge(nameP2, phoneP2, results.installmentP2)}>
-                     <MessageCircle className="w-5 h-5"/>
-                   </Button>
                 </div>
               </CardContent>
             </Card>
           )}
 
-        </div>
-      )}
-
-      {chargeModalState.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md shadow-2xl rounded-3xl animate-in fade-in zoom-in duration-200">
-            <CardHeader className="bg-emerald-50 border-b border-emerald-100 rounded-t-3xl p-6">
-              <CardTitle className="text-emerald-800">Enviar Cobrança</CardTitle>
-              <CardDescription className="text-emerald-600 mt-1">
-                O WhatsApp envia apenas uma mensagem por vez no atalho automático. Complete o envio em 2 passos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 p-6">
-              
-              <div className="space-y-3">
-                <Button 
-                  onClick={sendWhatsAppMsg} 
-                  className="w-full bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 flex justify-start h-auto p-4 rounded-2xl relative shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">1</div>
-                  <div className="text-left font-normal overflow-hidden w-full">
-                    <span className="block font-bold text-slate-900 mb-1">Clica aqui para Enviar Mensagem</span>
-                    <span className="text-xs text-slate-500 truncate block">"{chargeModalState.text}"</span>
-                  </div>
-                  <MessageCircle className="w-5 h-5 text-emerald-500 shrink-0 ml-2" />
-                </Button>
-
-                <Button 
-                  onClick={sendWhatsAppPix} 
-                  className="w-full bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 flex justify-start h-auto p-4 rounded-2xl relative shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">2</div>
-                  <div className="text-left font-normal overflow-hidden w-full">
-                    <span className="block font-bold text-emerald-900 mb-1">Clica aqui para Enviar Código Pix</span>
-                    <span className="text-xs text-emerald-600/80 truncate block">{chargeModalState.pixCode}</span>
-                  </div>
-                  <MessageCircle className="w-5 h-5 text-emerald-500 shrink-0 ml-2" />
-                </Button>
-              </div>
-
-            </CardContent>
-            <CardFooter className="flex justify-center border-t border-slate-100 bg-slate-50/50 p-4 rounded-b-3xl gap-2">
-              <Button variant="ghost" className="w-full rounded-2xl h-12 text-slate-500" onClick={() => setChargeModalState(prev => ({...prev, isOpen: false}))}>
-                Fechar
-              </Button>
-            </CardFooter>
-          </Card>
         </div>
       )}
     </div>
