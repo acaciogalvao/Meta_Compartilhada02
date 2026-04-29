@@ -36,6 +36,7 @@ interface GoalSummaryProps {
   remindersEnabled?: boolean;
   setRemindersEnabled?: (val: boolean) => void;
   handleSaveGoals?: () => Promise<void>;
+  motivationalMessage?: string;
 }
 
 export function GoalSummary({
@@ -67,7 +68,8 @@ export function GoalSummary({
   showToast,
   remindersEnabled,
   setRemindersEnabled,
-  handleSaveGoals
+  handleSaveGoals,
+  motivationalMessage
 }: GoalSummaryProps) {
   const [chargeModalState, setChargeModalState] = useState<{
     isOpen: boolean;
@@ -96,7 +98,7 @@ export function GoalSummary({
 
     if (category === 'loan') {
       const isP1 = name === nameP1;
-      const userSaved = Number(isP1 ? savedP1 : savedP2) || 0;
+      const userSaved = isP1 ? results.sP1 : results.sP2;
       const userRemaining = isP1 ? results.remainingP1 : results.remainingP2;
       const userPaidPeriodsCount = isP1 ? results.paidPeriodsCountP1 : results.paidPeriodsCountP2;
       const userTotalPeriods = isP1 ? results.totalPeriodsP1 : results.totalPeriodsP2;
@@ -108,7 +110,7 @@ export function GoalSummary({
          return `${String(current).padStart(2, '0')}/${totalStr}`;
       };
 
-      const text = `🧾 *COMPROVANTE DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})\n\n📝 _Segue acima o comprovante de pagamento!_`;
+      const text = `💰 *LEMBRETE DE PAGAMENTO DE EMPRÉSTIMO*\n*Título:* ${itemName || 'Empréstimo'}\n*Titular:* ${name}\n\n🏦 *Valor Original (Sem Juros):* ${formatCurrency(results.baseTotal)}\n✅ *Valor já quitado:* ${formatCurrency(userSaved)}\n📉 *Restante a quitar:* ${formatCurrency(userRemaining)}\n\n💳 *Parcela Atual:* ${formatPaidSequence(userPaidPeriodsCount, userTotalPeriods)}\n💵 *Valor da Parcela:* ${formatCurrency(amount)} (${freqLabel})\n\nPor favor, realize o pagamento da parcela atual. Obrigado!`;
 
       const encodedText = encodeURIComponent(text);
       const cleanPhone = phone.replace(/\D/g, "");
@@ -135,7 +137,7 @@ export function GoalSummary({
       const adjective = isFeminine(name) ? 'atrasada' : 'atrasado';
       const entityLabel = category === 'loan' ? 'do empréstimo' : 'da meta';
       
-      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!\n\n📝 _Segue acima o comprovante de pagamento_`;
+      const text = `Oi ${name}, vi que ${term} ${entityLabel} *${itemName || 'Sem nome'}* está ${adjective}. O valor é de *${formatCurrency(amount)}*. Vou te mandar o código Pix Copia e Cola separadamente logo abaixo para facilitar o pagamento!`;
 
       setChargeModalState({
         isOpen: true,
@@ -253,7 +255,7 @@ export function GoalSummary({
           </div>
 
           <div className="mt-8 text-center text-sky-400 text-[15px] font-medium tracking-tight">
-             Bom começo! Mantenham a consistência.
+             {motivationalMessage || "Bom começo! Mantenham a consistência."}
           </div>
         </CardContent>
       </Card>
@@ -280,13 +282,13 @@ export function GoalSummary({
               </div>
 
               <div className="w-full bg-slate-900/50 border border-white/5 h-2 rounded-full mb-6 relative overflow-hidden">
-                <div className="bg-emerald-500 progress-glow h-full rounded-full transition-all duration-1000 ease-in-out" style={{ width: `${Math.min(100, (Number(savedP1) / results.totalP1) * 100)}%` }}></div>
+                <div className="bg-emerald-500 progress-glow h-full rounded-full transition-all duration-1000 ease-in-out" style={{ width: `${Math.min(100, (results.sP1 / results.totalP1) * 100)}%` }}></div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 mb-6 divide-x divide-white/10">
                  <div className="flex flex-col text-left px-1">
                    <span className="text-[11px] text-slate-400 mb-1">Guardado</span>
-                   <span className="text-sm sm:text-[15px] font-bold text-white">{formatCurrency(Number(savedP1))}</span>
+                   <span className="text-sm sm:text-[15px] font-bold text-white">{formatCurrency(results.sP1)}</span>
                  </div>
                  <div className="flex flex-col text-center px-1">
                    <span className="text-[11px] text-pink-400 mb-1">Restante</span>
@@ -325,13 +327,13 @@ export function GoalSummary({
                 </div>
 
                 <div className="w-full bg-slate-900/50 border border-white/5 h-2 rounded-full mb-6 relative overflow-hidden">
-                  <div className="bg-purple-500 progress-glow h-full rounded-full transition-all duration-1000 ease-in-out" style={{ width: `${Math.min(100, (Number(savedP2) / results.totalP2) * 100)}%` }}></div>
+                  <div className="bg-purple-500 progress-glow h-full rounded-full transition-all duration-1000 ease-in-out" style={{ width: `${Math.min(100, (results.sP2 / results.totalP2) * 100)}%` }}></div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 mb-6 divide-x divide-white/10">
                    <div className="flex flex-col text-left px-1">
                      <span className="text-[11px] text-slate-400 mb-1">Guardado</span>
-                     <span className="text-sm sm:text-[15px] font-bold text-white">{formatCurrency(Number(savedP2))}</span>
+                     <span className="text-sm sm:text-[15px] font-bold text-white">{formatCurrency(results.sP2)}</span>
                    </div>
                    <div className="flex flex-col text-center px-1">
                      <span className="text-[11px] text-pink-400 mb-1">Restante</span>

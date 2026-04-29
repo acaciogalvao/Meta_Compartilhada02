@@ -488,14 +488,14 @@ async function startServer() {
     }
   });
 
-  app.post("/api/mock-pay", async (req, res) => {
+  app.post("/api/manual-pay", async (req, res) => {
     const { amount, goalId, payerId, method } = req.body;
     try {
-      const mockPaymentId = method === 'dinheiro' ? "dinheiro_" + Date.now() : "pag_" + Date.now();
+      const paymentId = method === 'dinheiro' ? "dinheiro_" + Date.now() : "pag_" + Date.now();
       const goal = await Goal.findById(goalId || "default_goal");
       if (goal) {
         goal.payments.push({
-          paymentId: mockPaymentId,
+          paymentId: paymentId,
           amount: amount,
           method: method || 'pix',
           payerId: payerId || 'P1'
@@ -510,7 +510,7 @@ async function startServer() {
         const newGoal = { 
           _id: goalId || "default_goal",
           payments: [{
-            paymentId: mockPaymentId,
+            paymentId: paymentId,
             amount: amount,
             method: method || 'pix',
             payerId: payerId || 'P1'

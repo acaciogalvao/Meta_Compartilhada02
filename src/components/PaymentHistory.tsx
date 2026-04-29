@@ -16,6 +16,7 @@ interface PaymentHistoryProps {
   installmentP2?: number;
   totalPeriodsP1?: number;
   totalPeriodsP2?: number;
+  handleDeletePayment?: (paymentId: string) => void;
 }
 
 export function PaymentHistory({
@@ -30,12 +31,14 @@ export function PaymentHistory({
   installmentP1 = 0,
   installmentP2 = 0,
   totalPeriodsP1 = 0,
-  totalPeriodsP2 = 0
+  totalPeriodsP2 = 0,
+  handleDeletePayment
 }: PaymentHistoryProps) {
   const [visibleCount, setVisibleCount] = useState(5);
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedPayment, setSelectedPayment] = useState<any | null>(null);
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
 
   // Generate available years and months from data
   const { availableYears, availableMonths } = useMemo(() => {
@@ -69,13 +72,13 @@ export function PaymentHistory({
         let endPeriod = 1;
         
         if (isP1) {
-          startPeriod = Math.floor(cumulativeP1 / installmentAmount) + 1;
+          startPeriod = Math.floor((cumulativeP1 / installmentAmount) + 0.05) + 1;
           cumulativeP1 += payment.amount;
-          endPeriod = Math.floor(cumulativeP1 / installmentAmount);
+          endPeriod = Math.floor((cumulativeP1 / installmentAmount) + 0.05);
         } else {
-          startPeriod = Math.floor(cumulativeP2 / installmentAmount) + 1;
+          startPeriod = Math.floor((cumulativeP2 / installmentAmount) + 0.05) + 1;
           cumulativeP2 += payment.amount;
-          endPeriod = Math.floor(cumulativeP2 / installmentAmount);
+          endPeriod = Math.floor((cumulativeP2 / installmentAmount) + 0.05);
         }
         
         if (startPeriod > totalPeriods) startPeriod = totalPeriods;
@@ -361,7 +364,7 @@ export function PaymentHistory({
                     <span className="font-mono text-xs text-slate-500 bg-white/5 px-2 py-1 rounded max-w-[150px] truncate" title={selectedPayment.paymentId?.replace('mock_', 'pag_')?.replace('pag:', 'pag_')}>{selectedPayment.paymentId?.replace('mock_', 'pag_')?.replace('pag:', 'pag_')}</span>
                   </div>
                   
-                  <div className="pt-2">
+                  <div className="pt-2 space-y-2">
                     <Button 
                       className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-colors"
                       onClick={() => sendReceiptOnWhatsApp(selectedPayment)}
@@ -369,6 +372,42 @@ export function PaymentHistory({
                       <Share2 className="w-5 h-5 mr-2" />
                       Compartilhar no WhatsApp
                     </Button>
+                    {handleDeletePayment && (
+                      <>
+                        {paymentToDelete === selectedPayment.paymentId ? (
+                          <div className="w-full bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 space-y-2 mt-2">
+                            <p className="text-sm text-rose-400 text-center font-medium">Tem certeza que deseja excluir?</p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                className="flex-1 hover:bg-white/5 text-slate-300 transition-colors"
+                                onClick={() => setPaymentToDelete(null)}
+                              >
+                                Cancelar
+                              </Button>
+                              <Button
+                                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white transition-colors shadow-[0_0_10px_rgba(244,63,94,0.3)]"
+                                onClick={() => {
+                                  handleDeletePayment(selectedPayment.paymentId);
+                                  setSelectedPayment(null);
+                                  setPaymentToDelete(null);
+                                }}
+                              >
+                                Excluir
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className="w-full text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl"
+                            onClick={() => setPaymentToDelete(selectedPayment.paymentId)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Excluir pagamento
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
              </div>

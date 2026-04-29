@@ -58,9 +58,10 @@ export default function App() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const [qrCodeBase64, setQrCodeBase64] = useState("");
-  const [isMockPayment, setIsMockPayment] = useState(true);
+  const [isManualPayment, setIsManualPayment] = useState(true);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "dinheiro">("pix");
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
 
   useEffect(() => {
     if (!pixAmount || Number(pixAmount) <= 0) {
@@ -79,6 +80,20 @@ export default function App() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch data from MongoDB
+  const handleDeletePaymentItem = async (pid: string) => {
+    if (!currentGoalId) return;
+    try {
+      await fetch(`/api/goal/${currentGoalId}/payment/${pid}`, { method: 'DELETE' });
+      const res = await fetch(`/api/goal/${currentGoalId}`);
+      if (res.ok) {
+        const data = await res.json();
+        populateGoalData(data, false);
+      }
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+    }
+  };
+
   const clearGoalData = () => {
     setCurrentGoalId("");
     setItemName("");
@@ -290,8 +305,8 @@ export default function App() {
         frequencyP2: category === 'loan' ? (durationUnit === 'days' ? 'daily' : durationUnit === 'weeks' ? 'weekly' : 'monthly') : frequencyP2,
         dueDayP1,
         dueDayP2,
-        savedP1: Number(savedP1),
-        savedP2: goalType === "individual" ? 0 : Number(savedP2)
+        savedP1: results.sP1,
+        savedP2: goalType === "individual" ? 0 : results.sP2
       };
 
       let res;
@@ -470,8 +485,8 @@ export default function App() {
         
         // In personal pix mode, we don't have a MercadoPago ID to poll
         setPaymentId(null);
-        // We set it as mock payment to show the 'Mock Pay' / 'Já Paguei' button
-        setIsMockPayment(true);
+        // We set it as a manual payment to show the 'Simulate Pay' / 'Já Paguei' button
+        setIsManualPayment(true);
         
       } else {
         // Option 2: Mercado Pago backend
@@ -499,7 +514,7 @@ export default function App() {
         setPaymentId(data.paymentId);
       }
       if (data.isMock !== undefined && !activePixKey) {
-        setIsMockPayment(data.isMock);
+        setIsManualPayment(data.isMock);
       }
     } catch (error) {
       console.error("Error generating pix:", error);
@@ -508,14 +523,15 @@ export default function App() {
     }
   };
 
-  const handleSimulatePayment = async () => {
-    if (!currentGoalId) {
-      showToast("Por favor, salve os dados antes de simular um pagamento.");
+  const handleConfirmPayment = async () => {
+    if (!currentGoalId || isConfirmingPayment) {
+      if (!currentGoalId) showToast("Por favor, salve os dados antes de simular um pagamento.");
       return;
     }
     const amount = Number(pixAmount);
+    setIsConfirmingPayment(true);
     try {
-      await fetch('/api/mock-pay', {
+      await fetch('/api/manual-pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, goalId: currentGoalId, payerId: currentPayer, method: paymentMethod })
@@ -546,6 +562,8 @@ export default function App() {
       }, 2000);
     } catch (error) {
       console.error("Error simulating payment:", error);
+    } finally {
+      setIsConfirmingPayment(false);
     }
   };
 
@@ -568,6 +586,7 @@ export default function App() {
     if (actualDurationUnit === 'days') totalMonths = timeValue / 30.4166;
     if (actualDurationUnit === 'weeks') totalMonths = timeValue / 4.3333;
 
+    // Calculate actual saved amounts from the database state (which includes initial values and tracks payments)
     const sP1 = Number(savedP1) || 0;
     const sP2 = Number(savedP2) || 0;
     const saved = sP1 + sP2;
@@ -609,14 +628,14 @@ export default function App() {
     const baseInstallmentP1 = getInstallment(totalP1, timeValue, actualDurationUnit, frequencyP1);
     const baseInstallmentP2 = getInstallment(totalP2, timeValue, actualDurationUnit, frequencyP2);
 
-    const installmentP1 = category === 'loan' ? baseInstallmentP1 : getInstallment(remainingP1, timeValue, actualDurationUnit, frequencyP1);
-    const installmentP2 = category === 'loan' ? baseInstallmentP2 : getInstallment(remainingP2, timeValue, actualDurationUnit, frequencyP2);
+    const installmentP1 = Math.min(baseInstallmentP1, remainingP1);
+    const installmentP2 = Math.min(baseInstallmentP2, remainingP2);
 
     const totalPeriodsP1 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP1);
     const totalPeriodsP2 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP2);
 
-    const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor(sP1 / baseInstallmentP1) : 0;
-    const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor(sP2 / baseInstallmentP2) : 0;
+    const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor((sP1 / baseInstallmentP1) + 0.05) : 0;
+    const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor((sP2 / baseInstallmentP2) + 0.05) : 0;
 
     const monthlyP1 = totalMonths > 0 ? remainingP1 / totalMonths : 0;
     const monthlyP2 = totalMonths > 0 ? remainingP2 / totalMonths : 0;
@@ -684,12 +703,16 @@ export default function App() {
       total,
       time: timeValue,
       saved,
+      sP1,
+      sP2,
       remaining,
       progressPercent,
       totalP1,
       totalP2,
       remainingP1,
       remainingP2,
+      baseInstallmentP1,
+      baseInstallmentP2,
       installmentP1,
       installmentP2,
       monthlyP1,
@@ -769,19 +792,19 @@ export default function App() {
             text += `
 👥 Resumo dos Pagamentos:
 👤 ${nameP1}:
-   - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
+   - Valor já quitado: ${formatCurrency(results.sP1)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Restante a quitar: ${formatCurrency(results.remainingP1)}
 
 👤 ${nameP2}:
-   - Valor já quitado: ${formatCurrency(Number(savedP2) || 0)}
+   - Valor já quitado: ${formatCurrency(results.sP2)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
    - Restante a quitar: ${formatCurrency(results.remainingP2)}
 `;
         } else {
             text += `
 👤 Quitação de ${nameP1}:
-   - Valor já quitado: ${formatCurrency(Number(savedP1) || 0)}
+   - Valor já quitado: ${formatCurrency(results.sP1)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Restante a quitar: ${formatCurrency(results.remainingP1)}
 `;
@@ -799,12 +822,12 @@ export default function App() {
           text += `
 📊 Resumo Individual:
 👤 ${nameP1} (${contributionP1}%):
-   - Já guardou: ${formatCurrency(Number(savedP1) || 0)}
+   - Já guardou: ${formatCurrency(results.sP1)}
    - Falta guardar: ${formatCurrency(results.remainingP1)}
    - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
 👤 ${nameP2} (${contributionP2}%):
-   - Já guardou: ${formatCurrency(Number(savedP2) || 0)}
+   - Já guardou: ${formatCurrency(results.sP2)}
    - Falta guardar: ${formatCurrency(results.remainingP2)}
    - Guardar: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
 
@@ -814,7 +837,7 @@ Bora conquistar juntos! ❤️`;
         } else {
           text += `
 📊 Meu Resumo:
-   - Já guardei: ${formatCurrency(Number(savedP1) || 0)}
+   - Já guardei: ${formatCurrency(results.sP1)}
    - Falta guardar: ${formatCurrency(results.remainingP1)}
    - Guardar: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
@@ -979,8 +1002,8 @@ Bora conquistar! 💪`;
                   category={category}
                   interestRate={interestRate}
                   results={results}
-                  savedP1={savedP1}
-                  savedP2={savedP2}
+                  savedP1={results.sP1.toString()}
+                  savedP2={results.sP2.toString()}
                   nameP1={nameP1}
                   nameP2={nameP2}
                   contributionP1={contributionP1}
@@ -999,6 +1022,7 @@ Bora conquistar! 💪`;
                   remindersEnabled={remindersEnabled}
                   setRemindersEnabled={setRemindersEnabled}
                   handleSaveGoals={handleSaveGoals}
+                  motivationalMessage={getMotivationalMessage(results.progressPercent)}
                 />
               </div>
             </div>
@@ -1014,10 +1038,11 @@ Bora conquistar! 💪`;
               formatCurrency={formatCurrency}
               progressPercent={results.progressPercent}
               handleClearHistory={handleClearHistoryClick}
-              installmentP1={results.installmentP1}
-              installmentP2={results.installmentP2}
+              installmentP1={results.baseInstallmentP1 || results.installmentP1}
+              installmentP2={results.baseInstallmentP2 || results.installmentP2}
               totalPeriodsP1={results.totalPeriodsP1}
               totalPeriodsP2={results.totalPeriodsP2}
+              handleDeletePayment={handleDeletePaymentItem}
             />
           </div>
         )}
@@ -1073,9 +1098,10 @@ Bora conquistar! 💪`;
           copied={copied}
           copyPixCode={copyPixCode}
           handleGeneratePix={handleGeneratePix}
-          handleSimulatePayment={handleSimulatePayment}
-          isMockPayment={isMockPayment}
-          setIsMockPayment={setIsMockPayment}
+          handleConfirmPayment={handleConfirmPayment}
+          isConfirmingPayment={isConfirmingPayment}
+          isManualPayment={isManualPayment}
+          setIsManualPayment={setIsManualPayment}
           paymentMethod={paymentMethod}
           setPaymentMethod={setPaymentMethod}
           formatCurrency={formatCurrency}

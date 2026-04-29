@@ -24,9 +24,10 @@ interface PixModalProps {
   copied: boolean;
   copyPixCode: () => void;
   handleGeneratePix: () => void;
-  handleSimulatePayment: () => void;
-  isMockPayment: boolean;
-  setIsMockPayment: (isMock: boolean) => void;
+  handleConfirmPayment: () => void;
+  isConfirmingPayment: boolean;
+  isManualPayment: boolean;
+  setIsManualPayment: (isManual: boolean) => void;
   paymentMethod: "pix" | "dinheiro";
   setPaymentMethod: (method: "pix" | "dinheiro") => void;
   formatCurrency: (value: number) => string;
@@ -53,9 +54,10 @@ export function PixModal({
   copied,
   copyPixCode,
   handleGeneratePix,
-  handleSimulatePayment,
-  isMockPayment,
-  setIsMockPayment,
+  handleConfirmPayment,
+  isConfirmingPayment,
+  isManualPayment,
+  setIsManualPayment,
   paymentMethod,
   setPaymentMethod,
   formatCurrency,
@@ -231,10 +233,15 @@ export function PixModal({
                 </Button>
 
                 <Button 
-                  className="w-full h-12 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-300 hover:to-indigo-400 text-white font-bold text-lg shadow-[0_0_20px_rgba(56,189,248,0.3)] border-none"
-                  onClick={handleSimulatePayment}
+                  disabled={isConfirmingPayment}
+                  className="w-full h-12 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-300 hover:to-indigo-400 text-white font-bold text-lg shadow-[0_0_20px_rgba(56,189,248,0.3)] border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleConfirmPayment}
                 >
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  {isConfirmingPayment ? (
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></div>
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                  )}
                   Confirmar {formatCurrency(Number(pixAmount))}
                 </Button>
               </div>
@@ -252,11 +259,15 @@ export function PixModal({
                  {formatCurrency(Number(pixAmount) || 0)}
                </div>
                <Button 
-                 disabled={!pixAmount || Number(pixAmount) <= 0}
+                 disabled={!pixAmount || Number(pixAmount) <= 0 || isConfirmingPayment}
                  className="w-full h-14 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-bold text-lg shadow-[0_0_20px_rgba(16,185,129,0.3)] border-none disabled:opacity-50 disabled:cursor-not-allowed"
-                 onClick={handleSimulatePayment}
+                 onClick={handleConfirmPayment}
                >
-                 <CheckCircle2 className="w-6 h-6 mr-2" />
+                  {isConfirmingPayment ? (
+                    <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></div>
+                  ) : (
+                    <CheckCircle2 className="w-6 h-6 mr-2" />
+                  )}
                  Confirmar Pagamento
                </Button>
              </div>
