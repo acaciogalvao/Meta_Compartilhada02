@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,6 +45,7 @@ export default function App() {
   const [dueDayP2, setDueDayP2] = useState(5);
   const [startDate, setStartDate] = useState(new Date().toISOString());
   const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const previousSavedRef = useRef<number | null>(null);
 
   // Pix Modal State
   const [showPixModal, setShowPixModal] = useState(false);
@@ -115,6 +116,7 @@ export default function App() {
     setSavedP1("");
     setSavedP2("");
     setPaymentsHistory([]);
+    setRemindersEnabled(false);
   };
 
   const populateGoalData = (data: any, isInitialLoad: boolean = false) => {
@@ -150,8 +152,13 @@ export default function App() {
     if (data.savedP2 !== undefined) setSavedP2(data.savedP2.toString());
     if (data.payments !== undefined) setPaymentsHistory(data.payments);
 
-    if (newSaved >= total && oldSaved < total && total > 0) {
+    if (isInitialLoad) {
+      previousSavedRef.current = newSaved;
+    } else if (previousSavedRef.current !== null && newSaved >= total && previousSavedRef.current < total && total > 0) {
       triggerConfetti();
+      previousSavedRef.current = newSaved;
+    } else {
+      previousSavedRef.current = newSaved;
     }
   };
 
