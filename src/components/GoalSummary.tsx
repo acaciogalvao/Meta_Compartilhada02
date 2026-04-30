@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { TrendingUp, MessageCircle, Copy, CheckCircle2, Clock, Share2, Edit2, Trash2, PlusCircle, Bell, BellRing } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useState } from 'react';
+import { ReminderModal } from "./ReminderModal";
 
 interface GoalSummaryProps {
   isEditing: boolean;
@@ -31,7 +32,7 @@ interface GoalSummaryProps {
   durationUnit: "days" | "weeks" | "months";
   formatCurrency: (value: number) => string;
   getFreqLabel: (freq: string) => string;
-  handleExportText: () => void;
+  handleExportText: () => string;
   showToast: (text: string, type?: 'success' | 'error') => void;
   remindersEnabled?: boolean;
   setRemindersEnabled?: (val: boolean) => void;
@@ -71,6 +72,15 @@ export function GoalSummary({
   handleSaveGoals,
   motivationalMessage
 }: GoalSummaryProps) {
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
+
+  const handleOpenReminder = () => {
+    const text = handleExportText();
+    setSummaryText(text);
+    setShowReminderModal(true);
+  };
+
   return (
     <div className="space-y-6">
       
@@ -86,7 +96,7 @@ export function GoalSummary({
                </div>
              </div>
              <div className="flex gap-1 shrink-0">
-               <button onClick={handleExportText} title="Enviar Lembrete" className="p-2 text-sky-400 hover:text-sky-300 transition-colors"><BellRing className="w-5 h-5"/></button>
+               <button onClick={handleOpenReminder} title="Enviar Lembrete" className="p-2 text-sky-400 hover:text-sky-300 transition-colors"><BellRing className="w-5 h-5"/></button>
                <button onClick={() => setIsEditing(!isEditing)} title="Editar" className="p-2 text-slate-400 hover:text-white transition-colors"><Edit2 className="w-5 h-5"/></button>
                <button onClick={handleDeleteGoal} title="Excluir" className="p-2 text-slate-400 hover:text-rose-400 transition-colors"><Trash2 className="w-5 h-5"/></button>
              </div>
@@ -242,6 +252,19 @@ export function GoalSummary({
 
         </div>
       )}
+
+      <ReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        goalType={goalType}
+        category={category}
+        nameP1={nameP1}
+        nameP2={nameP2}
+        phoneP1={phoneP1}
+        phoneP2={phoneP2}
+        summaryText={summaryText}
+        showToast={showToast}
+      />
     </div>
   );
 }

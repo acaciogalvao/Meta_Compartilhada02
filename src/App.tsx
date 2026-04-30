@@ -772,7 +772,7 @@ export default function App() {
     setSavedP2("");
   };
 
-  const handleExportText = () => {
+  const handleExportText = (): string => {
     let text = "";
     const formatPaidSequence = (paid: number, total: number) => {
        const current = Math.min(paid + 1, total);
@@ -850,8 +850,7 @@ Bora conquistar! 💪`;
         }
     }
 
-    const encodedText = encodeURIComponent(text.trim());
-    window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+    return text.trim();
   };
 
   const handleCreateNewGoal = () => {
