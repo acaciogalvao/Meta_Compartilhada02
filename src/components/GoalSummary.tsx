@@ -36,7 +36,7 @@ interface GoalSummaryProps {
   showToast: (text: string, type?: 'success' | 'error') => void;
   remindersEnabled?: boolean;
   setRemindersEnabled?: (val: boolean) => void;
-  handleSaveGoals?: () => Promise<void>;
+  handleSaveGoals?: (overrideUpdates?: any) => Promise<void>;
   motivationalMessage?: string;
 }
 
@@ -141,8 +141,9 @@ export function GoalSummary({
                      </div>
                      <button 
                         onClick={() => {
-                          if (setRemindersEnabled) setRemindersEnabled(!remindersEnabled);
-                          if (handleSaveGoals) setTimeout(() => handleSaveGoals(), 100);
+                          const newValue = !remindersEnabled;
+                          if (setRemindersEnabled) setRemindersEnabled(newValue);
+                          if (handleSaveGoals) handleSaveGoals({ remindersEnabled: newValue });
                         }}
                         className={`w-10 h-5 rounded-full relative transition-colors focus:outline-none ${remindersEnabled ? 'bg-sky-500' : 'bg-slate-600'}`}
                      >

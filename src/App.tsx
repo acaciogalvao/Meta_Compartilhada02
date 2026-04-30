@@ -283,7 +283,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentGoalId]);
 
-  const handleSaveGoals = async () => {
+  const handleSaveGoals = async (overrideUpdates?: any) => {
     try {
       const updates = {
         type: goalType,
@@ -306,7 +306,8 @@ export default function App() {
         dueDayP1,
         dueDayP2,
         savedP1: results.sP1,
-        savedP2: goalType === "individual" ? 0 : results.sP2
+        savedP2: goalType === "individual" ? 0 : results.sP2,
+        ...overrideUpdates
       };
 
       let res;
