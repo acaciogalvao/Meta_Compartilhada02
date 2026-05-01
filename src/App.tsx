@@ -299,7 +299,7 @@ export default function App() {
         itemName,
         totalValue: Number(totalValue),
         months: Number(months),
-        durationUnit: category === 'loan' ? durationUnit : 'months',
+        durationUnit,
         contributionP1: goalType === "individual" ? 100 : Number(contributionP1),
         remindersEnabled,
         nameP1,
@@ -589,7 +589,7 @@ export default function App() {
     const total = isLoan ? baseTotal * (1 + (Number(interestRate) || 0) / 100) : baseTotal;
     
     const timeValue = Number(months) || 1;
-    const actualDurationUnit = isLoan ? durationUnit : 'months';
+    const actualDurationUnit = durationUnit;
     let totalMonths = timeValue;
     if (actualDurationUnit === 'days') totalMonths = timeValue / 30.4166;
     if (actualDurationUnit === 'weeks') totalMonths = timeValue / 4.3333;
@@ -673,38 +673,37 @@ export default function App() {
       else currentSaved += monthlyTotal;
     }
 
-    // Determine if late based on payments
-    const checkIsLate = (payer: string, freq: string, dueDay: number) => {
-      if (saved >= total) return false;
+    // Determine if late based on expected periods from startDate
+    const checkIsLate = (payer: string, freq: string, paidPeriods: number) => {
+      const payerTotal = payer === 'P1' ? totalP1 : totalP2;
+      const payerSaved = payer === 'P1' ? sP1 : sP2;
+      if (payerSaved >= payerTotal || payerTotal === 0) return false;
+      
+      const start = new Date(startDate);
       const now = new Date();
-      const payerPayments = paymentsHistory.filter(p => p.payerId === payer).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
-      if (payerPayments.length === 0) {
-        // If no payments ever made, and due day has passed since start
-        const start = new Date(startDate);
-        if (freq === 'monthly' && (now.getMonth() > start.getMonth() || now.getFullYear() > start.getFullYear() || now.getDate() >= dueDay)) return true;
-        if (freq === 'weekly' && (now.getTime() - start.getTime() > 7*24*60*60*1000 || now.getDay() >= dueDay)) return true;
-        if (freq === 'daily' && now.getDate() !== start.getDate()) return true;
-        return false;
-      }
+      const daysElapsed = Math.floor((today.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysElapsed <= 0) return false;
+
+      let expectedPeriodsElapsed = 0;
       
-      const lastPayment = new Date(payerPayments[0].date);
-      
-      if (freq === 'monthly') {
-        if (now.getMonth() === lastPayment.getMonth() && now.getFullYear() === lastPayment.getFullYear()) return false;
-        if (now.getDate() >= dueDay) return true;
+      if (freq === 'daily') {
+        expectedPeriodsElapsed = daysElapsed;
       } else if (freq === 'weekly') {
-        const daysSinceLast = Math.floor((now.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceLast >= 7 || (daysSinceLast > 0 && now.getDay() >= dueDay && lastPayment.getDay() < dueDay)) return true;
-      } else if (freq === 'daily') {
-        const daysSinceLast = Math.floor((now.getTime() - lastPayment.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceLast >= 1) return true;
+        expectedPeriodsElapsed = Math.floor(daysElapsed / 7);
+      } else if (freq === 'monthly') {
+        const monthsDiff = (today.getFullYear() - startDay.getFullYear()) * 12 + today.getMonth() - startDay.getMonth();
+        expectedPeriodsElapsed = today.getDate() >= startDay.getDate() ? monthsDiff : monthsDiff - 1;
+        expectedPeriodsElapsed = Math.max(0, expectedPeriodsElapsed);
       }
-      return false;
+
+      return paidPeriods < expectedPeriodsElapsed;
     };
 
-    const isLateP1 = checkIsLate('P1', frequencyP1, dueDayP1);
-    const isLateP2 = checkIsLate('P2', frequencyP2, dueDayP2);
+    const isLateP1 = checkIsLate('P1', frequencyP1, paidPeriodsCountP1);
+    const isLateP2 = checkIsLate('P2', frequencyP2, paidPeriodsCountP2);
 
     return {
       baseTotal,
@@ -802,12 +801,12 @@ Passando para atualizar o status do empréstimo: *${itemName || 'Empréstimo'}*
         if (goalType === "shared") {
             text += `
 👥 *Resumo por Pessoa:*
-👤 *${nameP1}:*
+👤 *${nameP1}:* ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já quitou: ${formatCurrency(results.sP1)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Resta pagar: ${formatCurrency(results.remainingP1)}
 
-👤 *${nameP2}:*
+👤 *${nameP2}:* ${results.isLateP2 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já quitou: ${formatCurrency(results.sP2)}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP2, results.totalPeriodsP2)}
    - Resta pagar: ${formatCurrency(results.remainingP2)}
@@ -816,7 +815,7 @@ Passando para atualizar o status do empréstimo: *${itemName || 'Empréstimo'}*
 `;
         } else {
             text += `
-👤 *Titular:* ${nameP1}
+👤 *Titular:* ${nameP1} ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
    - Valor da Parcela: ${formatCurrency(results.installmentP1)} (${getFreqLabel(frequencyP1).toLowerCase()})
    - Resta pagar: ${formatCurrency(results.remainingP1)}
@@ -838,12 +837,12 @@ Passando para atualizar o progresso da ${goalType === 'individual' ? 'minha meta
         if (goalType === "shared") {
           text += `
 📊 *Resumo Individual:*
-👤 *${nameP1} (${contributionP1}%):*
+👤 *${nameP1} (${contributionP1}%):* ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já guardou: ${formatCurrency(results.sP1)}
    - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
    - Resta: ${formatCurrency(results.remainingP1)}
 
-👤 *${nameP2} (${contributionP2}%):*
+👤 *${nameP2} (${contributionP2}%):* ${results.isLateP2 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já guardou: ${formatCurrency(results.sP2)}
    - Guardar na vez: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
    - Resta: ${formatCurrency(results.remainingP2)}
@@ -851,7 +850,7 @@ Passando para atualizar o progresso da ${goalType === 'individual' ? 'minha meta
 Bora conquistar esse objetivo juntos! ❤️💪`;
         } else {
           text += `
-👤 *Meu Resumo:*
+👤 *Meu Resumo:* ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
 
 Bora conquistar! 💪`;

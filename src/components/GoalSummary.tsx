@@ -175,7 +175,14 @@ export function GoalSummary({
                      {nameP1.charAt(0).toUpperCase()}
                    </div>
                    <div>
-                     <h3 className="font-bold text-white text-lg leading-tight">{nameP1}</h3>
+                     <h3 className="font-bold text-white text-lg leading-tight flex items-center gap-2">
+                       {nameP1}
+                       {results.isLateP1 ? (
+                         <span className="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded-md border border-rose-500/30 uppercase tracking-widest font-bold">Atrasado</span>
+                       ) : (
+                         <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Em Dia</span>
+                       )}
+                     </h3>
                      <p className="text-[13px] text-slate-400 font-medium">{contributionP1}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                    </div>
                  </div>
@@ -217,7 +224,14 @@ export function GoalSummary({
                        {nameP2.charAt(0).toUpperCase()}
                      </div>
                      <div>
-                       <h3 className="font-bold text-white text-lg leading-tight">{nameP2}</h3>
+                       <h3 className="font-bold text-white text-lg leading-tight flex items-center gap-2">
+                         {nameP2}
+                         {results.isLateP2 ? (
+                           <span className="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded-md border border-rose-500/30 uppercase tracking-widest font-bold">Atrasado</span>
+                         ) : (
+                           <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Em Dia</span>
+                         )}
+                       </h3>
                        <p className="text-[13px] text-slate-400 font-medium">{contributionP2}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                      </div>
                    </div>

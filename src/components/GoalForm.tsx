@@ -312,7 +312,7 @@ export function GoalForm({
 
             <div className="space-y-3">
               <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">
-                Prazo — {months} {category === 'loan' ? (durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses') : 'meses'} *
+                Prazo — {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'} *
               </Label>
               <div className="flex items-center gap-3">
                 <div className={`flex flex-1 bg-white/5 border rounded-xl overflow-hidden shadow-sm h-12 ${errors.months ? 'border-red-400/50' : 'border-white/10'}`}>
@@ -325,22 +325,15 @@ export function GoalForm({
                     }}
                     className="w-full flex-1 border-0 bg-transparent text-center font-bold text-white focus-visible:ring-0 h-full"
                   />
-                  {category === 'loan' && (
-                    <select
-                      value={durationUnit}
-                      onChange={(e) => setDurationUnit(e.target.value as any)}
-                      className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
-                    >
-                      <option value="days" className="bg-slate-900">dias</option>
-                      <option value="weeks" className="bg-slate-900">semanas</option>
-                      <option value="months" className="bg-slate-900">meses</option>
-                    </select>
-                  )}
-                  {category !== 'loan' && (
-                    <div className="flex items-center px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 h-full">
-                      meses
-                    </div>
-                  )}
+                  <select
+                    value={durationUnit}
+                    onChange={(e) => setDurationUnit(e.target.value as any)}
+                    className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
+                  >
+                    <option value="days" className="bg-slate-900">dias</option>
+                    <option value="weeks" className="bg-slate-900">semanas</option>
+                    <option value="months" className="bg-slate-900">meses</option>
+                  </select>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1">
                   {commonMonths.map(m => (
@@ -452,7 +445,8 @@ export function GoalForm({
                       </>
                     )}
                     
-                    {((category !== 'loan' && frequencyP1 === 'weekly') || (category === 'loan' && durationUnit === 'weeks')) && (
+
+                    {frequencyP1 === 'weekly' && (
                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
                         <Label className="text-slate-400 font-bold text-xs">Qual dia da semana o pagamento vence?</Label>
                         <select 
@@ -471,7 +465,7 @@ export function GoalForm({
                       </div>
                     )}
 
-                    {((category !== 'loan' && frequencyP1 === 'monthly') || (category === 'loan' && durationUnit === 'months')) && (
+                    {frequencyP1 === 'monthly' && (
                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
                         <Label className="text-slate-400 font-bold text-xs">Qual dia do mês o pagamento vence?</Label>
                         <select 
@@ -485,6 +479,7 @@ export function GoalForm({
                         </select>
                       </div>
                     )}
+
                   </div>
                 </div>
 
@@ -549,40 +544,42 @@ export function GoalForm({
                         </>
                       )}
                       
-                      {((category !== 'loan' && frequencyP2 === 'weekly') || (category === 'loan' && durationUnit === 'weeks')) && (
-                        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                          <Label className="text-slate-400 font-bold text-xs">Qual dia da semana o pagamento vence?</Label>
-                          <select 
-                            value={dueDayP2} 
-                            onChange={e => setDueDayP2(Number(e.target.value))}
-                            className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
-                          >
-                            <option value={0} className="bg-slate-900">Domingo</option>
-                            <option value={1} className="bg-slate-900">Segunda-feira</option>
-                            <option value={2} className="bg-slate-900">Terça-feira</option>
-                            <option value={3} className="bg-slate-900">Quarta-feira</option>
-                            <option value={4} className="bg-slate-900">Quinta-feira</option>
-                            <option value={5} className="bg-slate-900">Sexta-feira</option>
-                            <option value={6} className="bg-slate-900">Sábado</option>
-                          </select>
-                        </div>
-                      )}
 
-                      {((category !== 'loan' && frequencyP2 === 'monthly') || (category === 'loan' && durationUnit === 'months')) && (
-                        <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                          <Label className="text-slate-400 font-bold text-xs">Qual dia do mês o pagamento vence?</Label>
-                          <select 
-                            value={dueDayP2} 
-                            onChange={e => setDueDayP2(Number(e.target.value))}
-                            className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
-                          >
-                            {Array.from({length: 31}, (_, i) => i + 1).map(day => (
-                              <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
                     </div>
+                    {frequencyP2 === 'weekly' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia da semana o pagamento vence?</Label>
+                        <select 
+                          value={dueDayP2} 
+                          onChange={e => setDueDayP2(Number(e.target.value))}
+                          className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                        >
+                          <option value={0} className="bg-slate-900">Domingo</option>
+                          <option value={1} className="bg-slate-900">Segunda-feira</option>
+                          <option value={2} className="bg-slate-900">Terça-feira</option>
+                          <option value={3} className="bg-slate-900">Quarta-feira</option>
+                          <option value={4} className="bg-slate-900">Quinta-feira</option>
+                          <option value={5} className="bg-slate-900">Sexta-feira</option>
+                          <option value={6} className="bg-slate-900">Sábado</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {frequencyP2 === 'monthly' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-slate-400 font-bold text-xs">Qual dia do mês o pagamento vence?</Label>
+                        <select 
+                          value={dueDayP2} 
+                          onChange={e => setDueDayP2(Number(e.target.value))}
+                          className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                        >
+                          {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                   </div>
                 )}
               </div>
@@ -663,39 +660,7 @@ export function GoalForm({
                      ))}
                    </div>
                    
-                   {frequencyP1 === 'weekly' && (
-                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                       <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
-                       <select 
-                         value={dueDayP1} 
-                         onChange={e => setDueDayP1(Number(e.target.value))}
-                         className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500/50 appearance-none"
-                       >
-                         <option value={0} className="bg-slate-900">Domingo</option>
-                         <option value={1} className="bg-slate-900">Segunda-feira</option>
-                         <option value={2} className="bg-slate-900">Terça-feira</option>
-                         <option value={3} className="bg-slate-900">Quarta-feira</option>
-                         <option value={4} className="bg-slate-900">Quinta-feira</option>
-                         <option value={5} className="bg-slate-900">Sexta-feira</option>
-                         <option value={6} className="bg-slate-900">Sábado</option>
-                       </select>
-                     </div>
-                   )}
 
-                   {frequencyP1 === 'monthly' && (
-                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                       <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
-                       <select 
-                         value={dueDayP1} 
-                         onChange={e => setDueDayP1(Number(e.target.value))}
-                         className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:-visible:ring-1 focus-visible:ring-sky-500/50 appearance-none"
-                       >
-                         {Array.from({length: 31}, (_, i) => i + 1).map(day => (
-                           <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
-                         ))}
-                       </select>
-                     </div>
-                   )}
                  </div>
                </CardContent>
             </Card>
@@ -760,47 +725,47 @@ export function GoalForm({
                          </button>
                        ))}
                      </div>
-                     
-                     {frequencyP2 === 'weekly' && (
-                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                         <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
-                         <select 
-                           value={dueDayP2} 
-                           onChange={e => setDueDayP2(Number(e.target.value))}
-                           className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500/50 appearance-none"
-                         >
-                           <option value={0} className="bg-slate-900">Domingo</option>
-                           <option value={1} className="bg-slate-900">Segunda-feira</option>
-                           <option value={2} className="bg-slate-900">Terça-feira</option>
-                           <option value={3} className="bg-slate-900">Quarta-feira</option>
-                           <option value={4} className="bg-slate-900">Quinta-feira</option>
-                           <option value={5} className="bg-slate-900">Sexta-feira</option>
-                           <option value={6} className="bg-slate-900">Sábado</option>
-                         </select>
-                       </div>
-                     )}
-
-                     {frequencyP2 === 'monthly' && (
-                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                         <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
-                         <select 
-                           value={dueDayP2} 
-                           onChange={e => setDueDayP2(Number(e.target.value))}
-                           className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
-                         >
-                           {Array.from({length: 31}, (_, i) => i + 1).map(day => (
-                             <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
-                           ))}
-                         </select>
-                       </div>
-                     )}
                    </div>
-                 </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </div>
+
+                   {frequencyP2 === 'weekly' && (
+                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 mt-4">
+                       <Label className="text-slate-400 font-bold text-xs">Qual dia da semana?</Label>
+                       <select 
+                         value={dueDayP2} 
+                         onChange={e => setDueDayP2(Number(e.target.value))}
+                         className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                       >
+                         <option value={0} className="bg-slate-900">Domingo</option>
+                         <option value={1} className="bg-slate-900">Segunda-feira</option>
+                         <option value={2} className="bg-slate-900">Terça-feira</option>
+                         <option value={3} className="bg-slate-900">Quarta-feira</option>
+                         <option value={4} className="bg-slate-900">Quinta-feira</option>
+                         <option value={5} className="bg-slate-900">Sexta-feira</option>
+                         <option value={6} className="bg-slate-900">Sábado</option>
+                       </select>
+                     </div>
+                   )}
+
+                   {frequencyP2 === 'monthly' && (
+                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2 mt-4">
+                       <Label className="text-slate-400 font-bold text-xs">Qual dia do mês?</Label>
+                       <select 
+                         value={dueDayP2} 
+                         onChange={e => setDueDayP2(Number(e.target.value))}
+                         className="w-full rounded-xl border border-white/10 bg-white/5 text-white h-11 px-3 focus:outline-none focus:ring-1 focus:ring-sky-500/50 appearance-none"
+                       >
+                         {Array.from({length: 31}, (_, i) => i + 1).map(day => (
+                           <option key={day} value={day} className="bg-slate-900">Dia {day}</option>
+                         ))}
+                       </select>
+                     </div>
+                   )}
+                  </CardContent>
+               </Card>
+             )}
+           </div>
+         )}
+       </div>
     </div>
   );
 }
