@@ -27,6 +27,12 @@ export default function App() {
   const [totalValue, setTotalValue] = useState("");
   const [months, setMonths] = useState("12"); // Now represents duration value
   const [durationUnit, setDurationUnit] = useState<"days" | "weeks" | "months">("months");
+  const [deadlineType, setDeadlineType] = useState<"duration" | "dates">("duration");
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 12);
+    return d.toISOString();
+  });
   const [contributionP1, setContributionP1] = useState("50");
   const [goalType, setGoalType] = useState<"individual" | "shared">("shared");
   const [savedP1, setSavedP1] = useState("");
@@ -101,6 +107,11 @@ export default function App() {
     setTotalValue("");
     setMonths("12");
     setDurationUnit("months");
+    setDeadlineType("duration");
+    const d = new Date();
+    setStartDate(d.toISOString());
+    d.setMonth(d.getMonth() + 12);
+    setEndDate(d.toISOString());
     setContributionP1("50");
     setGoalType("shared");
     setNameP1("Você");
@@ -127,6 +138,8 @@ export default function App() {
       if (data.totalValue !== undefined) setTotalValue(data.totalValue.toString());
       if (data.months !== undefined) setMonths(data.months.toString());
       if (data.durationUnit !== undefined) setDurationUnit(data.durationUnit);
+      if (data.deadlineType !== undefined) setDeadlineType(data.deadlineType);
+      if (data.endDate !== undefined) setEndDate(data.endDate);
       if (data.contributionP1 !== undefined) setContributionP1(data.contributionP1.toString());
       if (data.type !== undefined) setGoalType(data.type);
       if (data.nameP1 !== undefined) setNameP1(data.nameP1);
@@ -300,6 +313,9 @@ export default function App() {
         totalValue: Number(totalValue),
         months: Number(months),
         durationUnit,
+        deadlineType,
+        startDate,
+        endDate,
         contributionP1: goalType === "individual" ? 100 : Number(contributionP1),
         remindersEnabled,
         nameP1,
@@ -588,8 +604,20 @@ export default function App() {
     const isLoan = category === 'loan';
     const total = isLoan ? baseTotal * (1 + (Number(interestRate) || 0) / 100) : baseTotal;
     
-    const timeValue = Number(months) || 1;
-    const actualDurationUnit = durationUnit;
+    let timeValue = Number(months) || 1;
+    let actualDurationUnit = durationUnit;
+
+    if (deadlineType === 'dates') {
+       const start = new Date(startDate);
+       const end = new Date(endDate);
+       start.setHours(0,0,0,0);
+       end.setHours(0,0,0,0);
+       const diffTime = end.getTime() - start.getTime();
+       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+       timeValue = Math.max(1, diffDays);
+       actualDurationUnit = 'days';
+    }
+    
     let totalMonths = timeValue;
     if (actualDurationUnit === 'days') totalMonths = timeValue / 30.4166;
     if (actualDurationUnit === 'weeks') totalMonths = timeValue / 4.3333;
@@ -739,7 +767,7 @@ export default function App() {
       isLateP1,
       isLateP2
     };
-  }, [totalValue, months, contributionP1, savedP1, savedP2, frequencyP1, frequencyP2, contributionP2, paymentsHistory, dueDayP1, dueDayP2, startDate]);
+  }, [totalValue, months, durationUnit, deadlineType, contributionP1, savedP1, savedP2, frequencyP1, frequencyP2, contributionP2, paymentsHistory, dueDayP1, dueDayP2, startDate, endDate]);
 
   const getMotivationalMessage = (percent: number) => {
     if (percent === 0) return "Toda grande jornada começa com o primeiro passo. Vamos lá!";
@@ -930,6 +958,12 @@ Bora conquistar! 💪`;
           setMonths={setMonths}
           durationUnit={durationUnit}
           setDurationUnit={setDurationUnit}
+          deadlineType={deadlineType}
+          setDeadlineType={setDeadlineType}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           nameP1={nameP1}
           setNameP1={setNameP1}
           nameP2={nameP2}
