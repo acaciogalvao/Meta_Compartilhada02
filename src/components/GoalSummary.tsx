@@ -85,6 +85,15 @@ export function GoalSummary({
     setShowReminderModal(true);
   };
 
+  let daysRemainingGoal: null | number = null;
+  if (results.endDate || endDate) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const end = new Date(results.endDate || endDate);
+      end.setHours(0,0,0,0);
+      daysRemainingGoal = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
   return (
     <div className="space-y-6">
       
@@ -130,6 +139,17 @@ export function GoalSummary({
                      {new Date(results.startDate || startDate).toLocaleDateString()}
                      <br/>
                      <span className="text-slate-400 font-normal mt-1 block">até {new Date(results.endDate || endDate).toLocaleDateString()}</span>
+                     {daysRemainingGoal !== null && (
+                         <span className="text-[11px] font-medium text-slate-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-block mt-2">
+                             {daysRemainingGoal < 0 ? (
+                                 <span className="text-rose-400">Atrasado há {Math.abs(daysRemainingGoal)} dia{Math.abs(daysRemainingGoal) > 1 ? 's' : ''}</span>
+                             ) : daysRemainingGoal === 0 ? (
+                                 <span className="text-amber-400">Termina hoje!</span>
+                             ) : (
+                                 <span>Faltam {daysRemainingGoal} dia{daysRemainingGoal > 1 ? 's' : ''}</span>
+                             )}
+                         </span>
+                     )}
                   </span>
                </div>
                <div className="glass-card-subtle p-4">
