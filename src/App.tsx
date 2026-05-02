@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
-import { Heart, Target, Calculator, RefreshCcw, Download, TrendingUp, Sparkles, MessageCircle, QrCode, Copy, CheckCircle2, Trash2, Home, List, Plus } from 'lucide-react';
+import { Heart, Target, Calculator, RefreshCcw, Download, TrendingUp, Sparkles, MessageCircle, QrCode, Copy, CheckCircle2, Trash2, Home, List, Plus, ChevronDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { PaymentHistory } from './components/PaymentHistory';
 import { PixModal } from './components/PixModal';
@@ -103,6 +103,7 @@ export default function App() {
 
   const clearGoalData = () => {
     setCurrentGoalId("");
+    setCategory(currentSection === "emprestimos" ? "loan" : "saving");
     setItemName("");
     setTotalValue("");
     setMonths("12");
@@ -238,7 +239,9 @@ export default function App() {
         const data = await res.json();
         setGoalsList(data);
         if (data.length > 0) {
-          setCurrentGoalId(data[0]._id);
+          const firstGoal = data[0];
+          setCurrentSection(firstGoal.category === "loan" ? "emprestimos" : "metas");
+          setCurrentGoalId(firstGoal._id);
         } else {
           clearGoalData();
         }
@@ -324,8 +327,8 @@ export default function App() {
         phoneP2,
         pixKeyP1,
         pixKeyP2,
-        frequencyP1: category === 'loan' ? (durationUnit === 'days' ? 'daily' : durationUnit === 'weeks' ? 'weekly' : 'monthly') : frequencyP1,
-        frequencyP2: category === 'loan' ? (durationUnit === 'days' ? 'daily' : durationUnit === 'weeks' ? 'weekly' : 'monthly') : frequencyP2,
+        frequencyP1,
+        frequencyP2,
         dueDayP1,
         dueDayP2,
         savedP1: results.sP1,
@@ -427,7 +430,12 @@ export default function App() {
         const data = await listRes.json();
         setGoalsList(data);
         if (data.length > 0) {
-          setCurrentGoalId(data[0]._id);
+          const matchingGoals = data.filter((g: any) => currentSection === "emprestimos" ? g.category === "loan" : g.category !== "loan");
+          if (matchingGoals.length > 0) {
+              setCurrentGoalId(matchingGoals[0]._id);
+          } else {
+              clearGoalData();
+          }
         } else {
           clearGoalData(); // Clear fields if all are deleted
         }
@@ -604,23 +612,18 @@ export default function App() {
     const isLoan = category === 'loan';
     const total = isLoan ? baseTotal * (1 + (Number(interestRate) || 0) / 100) : baseTotal;
     
-    let timeValue = Number(months) || 1;
-    let actualDurationUnit = durationUnit;
-
-    if (deadlineType === 'dates') {
-       const start = new Date(startDate);
-       const end = new Date(endDate);
-       start.setHours(0,0,0,0);
-       end.setHours(0,0,0,0);
-       const diffTime = end.getTime() - start.getTime();
-       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-       timeValue = Math.max(1, diffDays);
-       actualDurationUnit = 'days';
-    }
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0,0,0,0);
+    end.setHours(0,0,0,0);
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const timeValue = Math.max(1, diffDays);
+    const actualDurationUnit = 'days';
     
-    let totalMonths = timeValue;
-    if (actualDurationUnit === 'days') totalMonths = timeValue / 30.4166;
-    if (actualDurationUnit === 'weeks') totalMonths = timeValue / 4.3333;
+    let totalMonths = timeValue / 30.4166;
+    const actualFreqP1 = frequencyP1;
+    const actualFreqP2 = frequencyP2;
 
     // Calculate actual saved amounts from the database state (which includes initial values and tracks payments)
     const sP1 = Number(savedP1) || 0;
@@ -630,25 +633,14 @@ export default function App() {
     const remaining = Math.max(0, total - saved);
     const progressPercent = total > 0 ? Math.min(100, (saved / total) * 100) : 0;
 
-    const totalP1 = total * ((Number(contributionP1) || 0) / 100);
-    const totalP2 = total * (contributionP2 / 100);
+    const actualContributionP1 = goalType === 'individual' ? 100 : (Number(contributionP1) || 0);
+    const actualContributionP2 = goalType === 'individual' ? 0 : contributionP2;
+
+    const totalP1 = total * (actualContributionP1 / 100);
+    const totalP2 = total * (actualContributionP2 / 100);
 
     const remainingP1 = Math.max(0, totalP1 - sP1);
     const remainingP2 = Math.max(0, totalP2 - sP2);
-
-    const getInstallment = (remainingAmount: number, rawTime: number, unit: string, freq: string) => {
-      if (rawTime <= 0) return 0;
-      let totalDays = rawTime;
-      if (unit === 'weeks') totalDays = rawTime * 7;
-      if (unit === 'months') totalDays = rawTime * 30.4166;
-      
-      const totalWeeks = totalDays / 7;
-      const totalMonthsCalc = totalDays / 30.4166;
-
-      if (freq === 'daily') return remainingAmount / totalDays;
-      if (freq === 'weekly') return remainingAmount / totalWeeks;
-      return remainingAmount / totalMonthsCalc; // monthly
-    };
 
     const getPeriodsCount = (rawTime: number, unit: string, freq: string) => {
       if (rawTime <= 0) return 1;
@@ -661,14 +653,19 @@ export default function App() {
       return Math.max(1, Math.round(totalDays / 30.4166));
     };
 
-    const baseInstallmentP1 = getInstallment(totalP1, timeValue, actualDurationUnit, frequencyP1);
-    const baseInstallmentP2 = getInstallment(totalP2, timeValue, actualDurationUnit, frequencyP2);
+    const getInstallment = (remainingAmount: number, rawTime: number, unit: string, freq: string) => {
+      const periods = getPeriodsCount(rawTime, unit, freq);
+      return remainingAmount / periods;
+    };
+
+    const baseInstallmentP1 = getInstallment(totalP1, timeValue, actualDurationUnit, actualFreqP1);
+    const baseInstallmentP2 = getInstallment(totalP2, timeValue, actualDurationUnit, actualFreqP2);
 
     const installmentP1 = Math.min(baseInstallmentP1, remainingP1);
     const installmentP2 = Math.min(baseInstallmentP2, remainingP2);
 
-    const totalPeriodsP1 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP1);
-    const totalPeriodsP2 = getPeriodsCount(timeValue, actualDurationUnit, frequencyP2);
+    const totalPeriodsP1 = getPeriodsCount(timeValue, actualDurationUnit, actualFreqP1);
+    const totalPeriodsP2 = getPeriodsCount(timeValue, actualDurationUnit, actualFreqP2);
 
     const paidPeriodsCountP1 = baseInstallmentP1 > 0 ? Math.floor((sP1 / baseInstallmentP1) + 0.05) : 0;
     const paidPeriodsCountP2 = baseInstallmentP2 > 0 ? Math.floor((sP2 / baseInstallmentP2) + 0.05) : 0;
@@ -702,7 +699,7 @@ export default function App() {
     }
 
     // Determine if late based on expected periods from startDate
-    const checkIsLate = (payer: string, freq: string, paidPeriods: number) => {
+    const checkIsLate = (payer: string, freq: string, paidPeriods: number, dueDay: number) => {
       const payerTotal = payer === 'P1' ? totalP1 : totalP2;
       const payerSaved = payer === 'P1' ? sP1 : sP2;
       if (payerSaved >= payerTotal || payerTotal === 0) return false;
@@ -720,18 +717,27 @@ export default function App() {
       if (freq === 'daily') {
         expectedPeriodsElapsed = daysElapsed;
       } else if (freq === 'weekly') {
-        expectedPeriodsElapsed = Math.floor(daysElapsed / 7);
+        const weeksElapsed = Math.floor(daysElapsed / 7);
+        // If today's day of week is past the due day of week, add 1 (dueDay: 0=Sun, 1=Mon, ...)
+        // We'll just do a rough estimate based on weeks elapsed since start date + current week check
+        expectedPeriodsElapsed = weeksElapsed;
+        const startDow = startDay.getDay();
+        const currentDow = today.getDay();
+        if (weeksElapsed > 0 && currentDow > dueDay && startDow <= dueDay) {
+            expectedPeriodsElapsed += 1;
+        }
       } else if (freq === 'monthly') {
         const monthsDiff = (today.getFullYear() - startDay.getFullYear()) * 12 + today.getMonth() - startDay.getMonth();
-        expectedPeriodsElapsed = today.getDate() >= startDay.getDate() ? monthsDiff : monthsDiff - 1;
+        // dueDay is 1-31
+        expectedPeriodsElapsed = today.getDate() > dueDay ? monthsDiff : monthsDiff - 1;
         expectedPeriodsElapsed = Math.max(0, expectedPeriodsElapsed);
       }
 
       return paidPeriods < expectedPeriodsElapsed;
     };
 
-    const isLateP1 = checkIsLate('P1', frequencyP1, paidPeriodsCountP1);
-    const isLateP2 = checkIsLate('P2', frequencyP2, paidPeriodsCountP2);
+    const isLateP1 = checkIsLate('P1', actualFreqP1, paidPeriodsCountP1, dueDayP1);
+    const isLateP2 = checkIsLate('P2', actualFreqP2, paidPeriodsCountP2, dueDayP2);
 
     return {
       baseTotal,
@@ -746,6 +752,8 @@ export default function App() {
       totalP2,
       remainingP1,
       remainingP2,
+      actualFreqP1,
+      actualFreqP2,
       baseInstallmentP1,
       baseInstallmentP2,
       installmentP1,
@@ -845,7 +853,7 @@ Passando para atualizar o status do empréstimo: *${itemName || 'Empréstimo'}*
             text += `
 👤 *Titular:* ${nameP1} ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Parcela Atual: ${formatPaidSequence(results.paidPeriodsCountP1, results.totalPeriodsP1)}
-   - Valor da Parcela: ${formatCurrency(results.installmentP1)} (${getFreqLabel(frequencyP1).toLowerCase()})
+   - Valor da Parcela: ${formatCurrency(results.installmentP1)} (${getFreqLabel(results.actualFreqP1).toLowerCase()})
    - Resta pagar: ${formatCurrency(results.remainingP1)}
 
 📆 _Por favor, lembre-se do pagamento da parcela atual!_
@@ -867,19 +875,19 @@ Passando para atualizar o progresso da ${goalType === 'individual' ? 'minha meta
 📊 *Resumo Individual:*
 👤 *${nameP1} (${contributionP1}%):* ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já guardou: ${formatCurrency(results.sP1)}
-   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(results.actualFreqP1).toLowerCase()}
    - Resta: ${formatCurrency(results.remainingP1)}
 
 👤 *${nameP2} (${contributionP2}%):* ${results.isLateP2 ? '⚠️ ATRASADO' : '✅ EM DIA'}
    - Já guardou: ${formatCurrency(results.sP2)}
-   - Guardar na vez: ${formatCurrency(results.installmentP2)} ${getFreqLabel(frequencyP2).toLowerCase()}
+   - Guardar na vez: ${formatCurrency(results.installmentP2)} ${getFreqLabel(results.actualFreqP2).toLowerCase()}
    - Resta: ${formatCurrency(results.remainingP2)}
 
 Bora conquistar esse objetivo juntos! ❤️💪`;
         } else {
           text += `
 👤 *Meu Resumo:* ${results.isLateP1 ? '⚠️ ATRASADO' : '✅ EM DIA'}
-   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(frequencyP1).toLowerCase()}
+   - Guardar na vez: ${formatCurrency(results.installmentP1)} ${getFreqLabel(results.actualFreqP1).toLowerCase()}
 
 Bora conquistar! 💪`;
         }
@@ -919,6 +927,7 @@ Bora conquistar! 💪`;
                     <button 
                         onClick={() => {
                             setCurrentSection("metas");
+                            setCategory("saving");
                             const metas = goalsList.filter(g => g.category !== "loan");
                             if (metas.length > 0) setCurrentGoalId(metas[0]._id);
                             else clearGoalData();
@@ -930,6 +939,7 @@ Bora conquistar! 💪`;
                     <button 
                         onClick={() => {
                             setCurrentSection("emprestimos");
+                            setCategory("loan");
                             const loans = goalsList.filter(g => g.category === "loan");
                             if (loans.length > 0) setCurrentGoalId(loans[0]._id);
                             else clearGoalData();
@@ -1016,21 +1026,34 @@ Bora conquistar! 💪`;
         </header>
 
         {/* Goals List Navigation */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-          {filteredGoalsList.map(goal => (
-            <Button 
-              key={goal._id} 
-              variant={currentGoalId === goal._id ? "default" : "outline"}
-              className={`${currentGoalId === goal._id ? "bg-white text-slate-900 border-white shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "text-slate-300 border-white/10 bg-white/5 hover:bg-white/10"} whitespace-nowrap rounded-full h-8 px-4 text-xs font-semibold tracking-wide transition-all`}
-              onClick={() => { setCurrentGoalId(goal._id); setIsEditing(false); }}
+        {filteredGoalsList.length > 0 ? (
+          <div className="relative mb-6 md:w-1/2 lg:w-1/3">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Target className="w-4 h-4 text-sky-400" />
+            </div>
+            <select
+              value={currentGoalId}
+              onChange={(e) => {
+                setCurrentGoalId(e.target.value);
+                setIsEditing(false);
+              }}
+              className="w-full h-11 pl-10 pr-10 bg-white/5 border border-white/10 rounded-xl text-white font-semibold text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500/50 shadow-sm"
             >
-              {goal.itemName || (currentSection === 'emprestimos' ? "Novo Empréstimo" : "Nova Meta")}
-            </Button>
-          ))}
-          {filteredGoalsList.length === 0 && (
+              {filteredGoalsList.map(goal => (
+                <option key={goal._id} value={goal._id} className="bg-slate-900 text-white">
+                  {goal.itemName || (currentSection === 'emprestimos' ? "Novo Empréstimo" : "Nova Meta")}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6">
              <p className="text-sm text-slate-500 italic">Nenhum item cadastrado nesta sessão.</p>
-          )}
-        </div>
+          </div>
+        )}
 
         {activeTab === "inicio" ? (
           <>
@@ -1053,8 +1076,10 @@ Bora conquistar! 💪`;
                   nameP2={nameP2}
                   contributionP1={contributionP1}
                   contributionP2={contributionP2}
-                  frequencyP1={frequencyP1}
-                  frequencyP2={frequencyP2}
+                  frequencyP1={results.actualFreqP1 || frequencyP1}
+                  frequencyP2={results.actualFreqP2 || frequencyP2}
+                  startDate={startDate}
+                  endDate={endDate}
                   phoneP1={phoneP1}
                   phoneP2={phoneP2}
                   itemName={itemName}

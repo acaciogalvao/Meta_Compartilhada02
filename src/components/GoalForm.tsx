@@ -157,12 +157,9 @@ export function GoalForm({
     const newErrors: Record<string, string> = {};
     if (!itemName.trim()) newErrors.itemName = category === 'loan' ? "O título do empréstimo é obrigatório." : "O nome da meta é obrigatório.";
     if (!totalValue || Number(totalValue) <= 0) newErrors.totalValue = "O valor deve ser maior que 0.";
-    if (deadlineType === 'duration' && (!months || Number(months) <= 0)) newErrors.months = "Informe o prazo.";
-    if (deadlineType === 'dates') {
-      const s = new Date(startDate);
-      const e = new Date(endDate);
-      if (e <= s) newErrors.months = "A data final deve ser maior que a data de início.";
-    }
+    const s = new Date(startDate);
+    const e = new Date(endDate);
+    if (e <= s) newErrors.months = "A data final deve ser maior que a data de início.";
     
     const isValidPix = (key: string, type: string) => {
       if (!key) return true;
@@ -325,90 +322,31 @@ export function GoalForm({
             )}
 
             <div className="space-y-4">
-              <div className="flex bg-white/5 rounded-xl border border-white/10 p-1">
-                <button
-                  type="button"
-                  onClick={() => setDeadlineType("duration")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${deadlineType === "duration" ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Duração
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeadlineType("dates")}
-                  className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${deadlineType === "dates" ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'text-slate-400 hover:text-white'}`}
-                >
-                  Datas Início/Fim
-                </button>
+              <div className="flex gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex-1 space-y-2">
+                  <Label className={`font-bold text-[10px] uppercase tracking-widest ${errors.months ? 'text-red-400' : 'text-sky-400'}`}>Data Início *</Label>
+                  <Input 
+                    type="date" 
+                    value={startDate.includes('T') ? startDate.split('T')[0] : startDate} 
+                    onChange={(e) => {
+                      if (e.target.value) setStartDate(new Date(e.target.value + 'T12:00:00Z').toISOString())
+                    }}
+                    className={`bg-white/5 text-white h-12 ${errors.months ? 'border-red-400/50 focus-visible:ring-red-400' : 'border-white/10'}`} 
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Label className={`font-bold text-[10px] uppercase tracking-widest ${errors.months ? 'text-red-400' : 'text-sky-400'}`}>Data Final *</Label>
+                  <Input 
+                    type="date" 
+                    value={endDate.includes('T') ? endDate.split('T')[0] : endDate} 
+                    onChange={(e) => {
+                      if (e.target.value) setEndDate(new Date(e.target.value + 'T12:00:00Z').toISOString())
+                      if (errors.months) setErrors({ ...errors, months: "" });
+                    }}
+                    className={`bg-white/5 text-white h-12 ${errors.months ? 'border-red-400/50 focus-visible:ring-red-400' : 'border-white/10'}`} 
+                  />
+                </div>
               </div>
-
-              {deadlineType === 'duration' ? (
-                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                  <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest">
-                    Prazo — {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'} *
-                  </Label>
-                  <div className="flex items-center gap-3">
-                    <div className={`flex flex-1 bg-white/5 border rounded-xl overflow-hidden shadow-sm h-12 ${errors.months ? 'border-red-400/50' : 'border-white/10'}`}>
-                      <Input 
-                        type="number"
-                        value={months}
-                        onChange={(e) => {
-                          setMonths(e.target.value);
-                          if (errors.months) setErrors({ ...errors, months: "" });
-                        }}
-                        className="w-full flex-1 border-0 bg-transparent text-center font-bold text-white focus-visible:ring-0 h-full"
-                      />
-                      <select
-                        value={durationUnit}
-                        onChange={(e) => setDurationUnit(e.target.value as any)}
-                        className="flex items-center px-2 sm:px-3 text-slate-300 text-sm border-l border-white/10 bg-black/20 focus:outline-none appearance-none"
-                      >
-                        <option value="days" className="bg-slate-900">dias</option>
-                        <option value="weeks" className="bg-slate-900">semanas</option>
-                        <option value="months" className="bg-slate-900">meses</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide flex-1">
-                      {commonMonths.map(m => (
-                        <button 
-                          key={m} 
-                          type="button"
-                          onClick={() => setMonths(m)}
-                          className="w-10 h-10 shrink-0 rounded-full border border-white/10 bg-white/5 text-slate-300 font-medium hover:bg-white/10 transition-colors"
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-3 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex-1 space-y-2">
-                    <Label className={`font-bold text-[10px] uppercase tracking-widest ${errors.months ? 'text-red-400' : 'text-sky-400'}`}>Data Início</Label>
-                    <Input 
-                      type="date" 
-                      value={startDate.includes('T') ? startDate.split('T')[0] : startDate} 
-                      onChange={(e) => {
-                        if (e.target.value) setStartDate(new Date(e.target.value + 'T12:00:00Z').toISOString())
-                      }}
-                      className={`bg-white/5 text-white h-12 ${errors.months ? 'border-red-400/50 focus-visible:ring-red-400' : 'border-white/10'}`} 
-                    />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Label className={`font-bold text-[10px] uppercase tracking-widest ${errors.months ? 'text-red-400' : 'text-sky-400'}`}>Data Final</Label>
-                    <Input 
-                      type="date" 
-                      value={endDate.includes('T') ? endDate.split('T')[0] : endDate} 
-                      onChange={(e) => {
-                        if (e.target.value) setEndDate(new Date(e.target.value + 'T12:00:00Z').toISOString())
-                        if (errors.months) setErrors({ ...errors, months: "" });
-                      }}
-                      className={`bg-white/5 text-white h-12 ${errors.months ? 'border-red-400/50 focus-visible:ring-red-400' : 'border-white/10'}`} 
-                    />
-                  </div>
-                </div>
-              )}
               {errors.months && <p className="text-red-400 text-xs font-semibold">{errors.months}</p>}
             </div>
 
@@ -491,22 +429,21 @@ export function GoalForm({
                     {errors.pixKeyP1 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP1}</p>}
                   </div>
                   <div className="space-y-1.5 pt-2">
-                    {category !== 'loan' && (
-                      <>
-                        <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
-                        <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
-                          {['daily', 'weekly', 'monthly'].map(freq => (
-                            <button
-                              key={freq}
-                              onClick={() => setFrequencyP1(freq)}
-                              className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP1 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                            >
-                              {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
+                    <>
+                      <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                      <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                        {['daily', 'weekly', 'monthly'].map(freq => (
+                          <button
+                            key={freq}
+                            type="button"
+                            onClick={() => setFrequencyP1(freq)}
+                            className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP1 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                          >
+                            {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                     
 
                     {frequencyP1 === 'weekly' && (
@@ -590,22 +527,21 @@ export function GoalForm({
                       {errors.pixKeyP2 && <p className="text-[10px] text-red-400 font-medium">{errors.pixKeyP2}</p>}
                     </div>
                     <div className="space-y-1.5 pt-2">
-                      {category !== 'loan' && (
-                        <>
-                          <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
-                          <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
-                            {['daily', 'weekly', 'monthly'].map(freq => (
-                              <button
-                                key={freq}
-                                onClick={() => setFrequencyP2(freq)}
-                                className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP2 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
-                              >
-                                {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
+                      <>
+                        <Label className="text-sky-400 font-bold text-[10px] uppercase tracking-widest block mb-2">Frequência de pagamento</Label>
+                        <div className="flex gap-2 bg-white/5 p-1 rounded-xl border border-white/10 mb-3">
+                          {['daily', 'weekly', 'monthly'].map(freq => (
+                            <button
+                              key={freq}
+                              type="button"
+                              onClick={() => setFrequencyP2(freq)}
+                              className={`flex-1 py-2 text-[13px] font-bold rounded-lg transition-colors ${frequencyP2 === freq ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                            >
+                              {freq === 'daily' ? 'Diário' : freq === 'weekly' ? 'Semanal' : 'Mensal'}
+                            </button>
+                          ))}
+                        </div>
+                      </>
                       
 
                     </div>

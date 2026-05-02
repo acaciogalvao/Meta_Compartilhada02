@@ -27,6 +27,8 @@ interface GoalSummaryProps {
   frequencyP2: string;
   phoneP1: string;
   phoneP2: string;
+  startDate: string;
+  endDate: string;
   itemName: string;
   months: string;
   durationUnit: "days" | "weeks" | "months";
@@ -60,6 +62,8 @@ export function GoalSummary({
   frequencyP2,
   phoneP1,
   phoneP2,
+  startDate,
+  endDate,
   itemName,
   months,
   durationUnit,
@@ -122,8 +126,10 @@ export function GoalSummary({
                      <Clock className="w-4 h-4"/>
                      <span className="text-xs font-medium">Prazo</span>
                   </div>
-                  <span className="font-bold text-white text-lg">
-                    {months} {durationUnit === 'days' ? 'dias' : durationUnit === 'weeks' ? 'semanas' : 'meses'}
+                  <span className="font-bold text-white text-[15px] leading-tight">
+                     {new Date(results.startDate || startDate).toLocaleDateString()}
+                     <br/>
+                     <span className="text-slate-400 font-normal mt-1 block">até {new Date(results.endDate || endDate).toLocaleDateString()}</span>
                   </span>
                </div>
                <div className="glass-card-subtle p-4">

@@ -42,7 +42,6 @@ const goalSchema = new mongoose.Schema({
   months: Number,
   durationUnit: { type: String, default: "months" },
   deadlineType: { type: String, default: "duration" },
-  startDate: String,
   endDate: String,
   contributionP1: Number,
   nameP1: String,
@@ -57,7 +56,7 @@ const goalSchema = new mongoose.Schema({
   dueDayP2: { type: Number, default: 5 },
   savedP1: { type: Number, default: 0 },
   savedP2: { type: Number, default: 0 },
-  startDate: { type: Date, default: Date.now },
+  startDate: String,
   remindersEnabled: { type: Boolean, default: false },
   payments: [paymentSchema]
 });
