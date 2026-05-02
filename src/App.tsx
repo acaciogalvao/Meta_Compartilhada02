@@ -698,16 +698,15 @@ export default function App() {
       else currentSaved += monthlyTotal;
     }
 
+    const currentNow = new Date();
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const today = new Date(currentNow.getFullYear(), currentNow.getMonth(), currentNow.getDate());
+
     // Determine if late based on expected periods from startDate
     const checkIsLate = (payer: string, freq: string, paidPeriods: number, dueDay: number) => {
       const payerTotal = payer === 'P1' ? totalP1 : totalP2;
       const payerSaved = payer === 'P1' ? sP1 : sP2;
       if (payerSaved >= payerTotal || payerTotal === 0) return false;
-      
-      const start = new Date(startDate);
-      const now = new Date();
-      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
       const daysElapsed = Math.floor((today.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
       if (daysElapsed <= 0) return false;
@@ -736,8 +735,29 @@ export default function App() {
       return paidPeriods < expectedPeriodsElapsed;
     };
 
+    const getNextDueDate = (freq: string, paidPeriods: number, dueDay: number) => {
+      const d = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
+      if (freq === 'daily') {
+          d.setDate(d.getDate() + paidPeriods + 1);
+      } else if (freq === 'weekly') {
+          let daysToFirst = (dueDay - d.getDay() + 7) % 7;
+          if (daysToFirst === 0) daysToFirst = 7;
+          d.setDate(d.getDate() + daysToFirst + (paidPeriods * 7));
+      } else if (freq === 'monthly') {
+          d.setDate(1);
+          d.setMonth(startDay.getMonth() + paidPeriods + 1);
+          const targetMonth = d.getMonth();
+          d.setDate(dueDay);
+          if (d.getMonth() !== targetMonth) d.setDate(0);
+      }
+      return d;
+    };
+
     const isLateP1 = checkIsLate('P1', actualFreqP1, paidPeriodsCountP1, dueDayP1);
     const isLateP2 = checkIsLate('P2', actualFreqP2, paidPeriodsCountP2, dueDayP2);
+    
+    const daysToNextP1 = Math.ceil((getNextDueDate(actualFreqP1, paidPeriodsCountP1, dueDayP1).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const daysToNextP2 = Math.ceil((getNextDueDate(actualFreqP2, paidPeriodsCountP2, dueDayP2).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     return {
       baseTotal,
@@ -773,7 +793,9 @@ export default function App() {
       paidPeriodsCountP2,
       chartData,
       isLateP1,
-      isLateP2
+      isLateP2,
+      daysToNextP1,
+      daysToNextP2
     };
   }, [totalValue, months, durationUnit, deadlineType, contributionP1, savedP1, savedP2, frequencyP1, frequencyP2, contributionP2, paymentsHistory, dueDayP1, dueDayP2, startDate, endDate]);
 

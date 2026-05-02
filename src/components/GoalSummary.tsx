@@ -183,13 +183,26 @@ export function GoalSummary({
                    <div>
                      <h3 className="font-bold text-white text-lg leading-tight flex items-center gap-2">
                        {nameP1}
-                       {results.isLateP1 ? (
+                       {results.remainingP1 === 0 ? (
+                         <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Concluído</span>
+                       ) : results.isLateP1 ? (
                          <span className="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded-md border border-rose-500/30 uppercase tracking-widest font-bold">Atrasado</span>
                        ) : (
                          <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Em Dia</span>
                        )}
                      </h3>
-                     <p className="text-[13px] text-slate-400 font-medium">{contributionP1}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
+                     <p className="text-[13px] text-slate-400 font-medium mb-1.5">{contributionP1}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
+                     {results.remainingP1 > 0 && results.daysToNextP1 !== undefined && !Number.isNaN(results.daysToNextP1) && (
+                        <p className="text-[11px] font-medium text-slate-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-flex mt-1">
+                          {results.daysToNextP1 < 0 ? (
+                            <span className="text-rose-400">Vencido há {Math.abs(results.daysToNextP1)} dia{Math.abs(results.daysToNextP1) > 1 ? 's' : ''}</span>
+                          ) : results.daysToNextP1 === 0 ? (
+                            <span className="text-amber-400 font-bold">Vence hoje!</span>
+                          ) : (
+                            `Próximo: vence em ${results.daysToNextP1} dia${results.daysToNextP1 > 1 ? 's' : ''}`
+                          )}
+                        </p>
+                     )}
                    </div>
                  </div>
               </div>
@@ -232,13 +245,26 @@ export function GoalSummary({
                      <div>
                        <h3 className="font-bold text-white text-lg leading-tight flex items-center gap-2">
                          {nameP2}
-                         {results.isLateP2 ? (
+                         {results.remainingP2 === 0 ? (
+                           <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Concluído</span>
+                         ) : results.isLateP2 ? (
                            <span className="bg-rose-500/20 text-rose-400 text-[10px] px-2 py-0.5 rounded-md border border-rose-500/30 uppercase tracking-widest font-bold">Atrasado</span>
                          ) : (
                            <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase tracking-widest font-bold">Em Dia</span>
                          )}
                        </h3>
-                       <p className="text-[13px] text-slate-400 font-medium">{contributionP2}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
+                       <p className="text-[13px] text-slate-400 font-medium mb-1.5">{contributionP2}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
+                       {results.remainingP2 > 0 && results.daysToNextP2 !== undefined && !Number.isNaN(results.daysToNextP2) && (
+                          <p className="text-[11px] font-medium text-slate-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-flex mt-1">
+                            {results.daysToNextP2 < 0 ? (
+                              <span className="text-rose-400">Vencido há {Math.abs(results.daysToNextP2)} dia{Math.abs(results.daysToNextP2) > 1 ? 's' : ''}</span>
+                            ) : results.daysToNextP2 === 0 ? (
+                              <span className="text-amber-400 font-bold">Vence hoje!</span>
+                            ) : (
+                              `Próximo: vence em ${results.daysToNextP2} dia${results.daysToNextP2 > 1 ? 's' : ''}`
+                            )}
+                          </p>
+                       )}
                      </div>
                    </div>
                 </div>
