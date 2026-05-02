@@ -213,13 +213,13 @@ export function GoalSummary({
                      </h3>
                      <p className="text-[13px] text-slate-400 font-medium mb-1.5">{contributionP1}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                      {results.remainingP1 > 0 && results.daysToNextP1 !== undefined && !Number.isNaN(results.daysToNextP1) && (
-                        <p className="text-[11px] font-medium text-slate-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-flex mt-1">
-                          {results.daysToNextP1 < 0 ? (
-                            <span className="text-rose-400">Vencido há {Math.abs(results.daysToNextP1)} dia{Math.abs(results.daysToNextP1) > 1 ? 's' : ''}</span>
+                        <p className={`text-[11px] font-medium px-2 py-0.5 rounded-md inline-flex mt-1 ${results.isLateP1 ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400' : 'bg-white/5 border border-white/10 text-slate-300'}`}>
+                          {results.isLateP1 ? (
+                            <span>Atraso de {Math.max(1, Math.abs(results.daysToNextP1))} dia{Math.max(1, Math.abs(results.daysToNextP1)) > 1 ? 's' : ''}</span>
                           ) : results.daysToNextP1 === 0 ? (
                             <span className="text-amber-400 font-bold">Vence hoje!</span>
                           ) : (
-                            `Próximo: vence em ${results.daysToNextP1} dia${results.daysToNextP1 > 1 ? 's' : ''}`
+                            <span>Próximo: vence em {results.daysToNextP1} dia{results.daysToNextP1 > 1 ? 's' : ''}</span>
                           )}
                         </p>
                      )}
@@ -275,13 +275,13 @@ export function GoalSummary({
                        </h3>
                        <p className="text-[13px] text-slate-400 font-medium mb-1.5">{contributionP2}% {category === 'loan' ? 'do empréstimo' : 'da meta'}</p>
                        {results.remainingP2 > 0 && results.daysToNextP2 !== undefined && !Number.isNaN(results.daysToNextP2) && (
-                          <p className="text-[11px] font-medium text-slate-300 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md inline-flex mt-1">
-                            {results.daysToNextP2 < 0 ? (
-                              <span className="text-rose-400">Vencido há {Math.abs(results.daysToNextP2)} dia{Math.abs(results.daysToNextP2) > 1 ? 's' : ''}</span>
+                          <p className={`text-[11px] font-medium px-2 py-0.5 rounded-md inline-flex mt-1 ${results.isLateP2 ? 'bg-rose-500/10 border border-rose-500/20 text-rose-400' : 'bg-white/5 border border-white/10 text-slate-300'}`}>
+                            {results.isLateP2 ? (
+                              <span>Atraso de {Math.max(1, Math.abs(results.daysToNextP2))} dia{Math.max(1, Math.abs(results.daysToNextP2)) > 1 ? 's' : ''}</span>
                             ) : results.daysToNextP2 === 0 ? (
                               <span className="text-amber-400 font-bold">Vence hoje!</span>
                             ) : (
-                              `Próximo: vence em ${results.daysToNextP2} dia${results.daysToNextP2 > 1 ? 's' : ''}`
+                              <span>Próximo: vence em {results.daysToNextP2} dia{results.daysToNextP2 > 1 ? 's' : ''}</span>
                             )}
                           </p>
                        )}
