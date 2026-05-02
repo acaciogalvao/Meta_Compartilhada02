@@ -89,9 +89,16 @@ export function GoalSummary({
   if (results.endDate || endDate) {
       const today = new Date();
       today.setHours(0,0,0,0);
+      
+      const start = new Date(results.startDate || startDate);
+      start.setHours(0,0,0,0);
+      
       const end = new Date(results.endDate || endDate);
       end.setHours(0,0,0,0);
-      daysRemainingGoal = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Se hoje for antes do início, a contagem deve ser do início ao fim
+      const referenceDate = today < start ? start : today;
+      daysRemainingGoal = Math.ceil((end.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   return (

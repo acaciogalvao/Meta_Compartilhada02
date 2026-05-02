@@ -708,6 +708,9 @@ export default function App() {
       const payerSaved = payer === 'P1' ? sP1 : sP2;
       if (payerSaved >= payerTotal || payerTotal === 0) return false;
       
+      // Se hoje for antes da data de início, não pode estar atrasado
+      if (today < startDay) return false;
+
       const daysElapsed = Math.floor((today.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24));
       if (daysElapsed <= 0) return false;
 
@@ -756,8 +759,13 @@ export default function App() {
     const isLateP1 = checkIsLate('P1', actualFreqP1, paidPeriodsCountP1, dueDayP1);
     const isLateP2 = checkIsLate('P2', actualFreqP2, paidPeriodsCountP2, dueDayP2);
     
-    const daysToNextP1 = Math.ceil((getNextDueDate(actualFreqP1, paidPeriodsCountP1, dueDayP1).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const daysToNextP2 = Math.ceil((getNextDueDate(actualFreqP2, paidPeriodsCountP2, dueDayP2).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const nextDueDateP1 = getNextDueDate(actualFreqP1, paidPeriodsCountP1, dueDayP1);
+    const nextDueDateP2 = getNextDueDate(actualFreqP2, paidPeriodsCountP2, dueDayP2);
+    
+    const referenceDate = today < startDay ? startDay : today;
+    
+    const daysToNextP1 = Math.ceil((nextDueDateP1.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysToNextP2 = Math.ceil((nextDueDateP2.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
 
     return {
       baseTotal,
